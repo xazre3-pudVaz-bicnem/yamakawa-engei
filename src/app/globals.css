@@ -1,0 +1,296 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Brand colors ----------------------------------------------
+     ベース: 白・オフホワイト
+     メイン: 葉の深いグリーン
+     アクセント: ライチの果皮の赤〜ピンク
+     補助: 南国の日差しを思わせるベージュ・クリーム
+     ※ 赤と緑を同じ面積で使わない。赤は「ここぞ」の一点にだけ置く。
+  ---------------------------------------------------------------- */
+  --color-paper: #fbfaf6; /* ベース（オフホワイト） */
+  --color-paper-warm: #f6f2e9; /* 面の切り替えに使う一段濃いオフホワイト */
+  --color-cream: #f3ead9; /* クリーム */
+  --color-sand: #e5d8c1; /* ベージュ（罫線・面） */
+
+  --color-ink: #1b211c; /* 本文（緑みのある黒） */
+  --color-moss: #5b6a5c; /* 補助テキスト（AA確保） */
+
+  --color-forest: #1e4632; /* メイン：深いグリーン */
+  --color-forest-deep: #12301f; /* 濃い面・フッター */
+  --color-leaf: #4e7a5c; /* 中間のグリーン（罫線・アイコン） */
+  --color-leaf-pale: #cfdcd0; /* 淡いグリーン（面） */
+
+  --color-lychee: #b93a52; /* アクセント：ライチの果皮 */
+  --color-lychee-deep: #96263c; /* 濃いアクセント（小さな文字用） */
+  --color-lychee-soft: #edd0d3; /* 淡いピンク（面・バッジ） */
+
+  /* ---- Fonts ---- */
+  --font-mincho: var(--font-shippori), "Hiragino Mincho ProN", "Yu Mincho",
+    "Noto Serif JP", serif;
+  --font-gothic: var(--font-zen-kaku), "Hiragino Kaku Gothic ProN", "Yu Gothic",
+    "Noto Sans JP", sans-serif;
+  --font-serif-en: var(--font-garamond), "Times New Roman", Georgia, serif;
+
+  /* ---- Easing ---- */
+  --ease-quiet: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ================================================================
+   Base
+================================================================ */
+
+html {
+  /* 固定ヘッダー分。アンカーリンクで見出しが隠れないようにする */
+  scroll-padding-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-gothic);
+  /* 日本語の約物を詰める。長い見出しの間延びを防ぐ */
+  font-feature-settings: "palt";
+  letter-spacing: 0.02em;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-leaf) 30%, transparent);
+  color: var(--color-ink);
+}
+
+/* フォーカスリングは背景の明暗で色を変える。
+   --focus-ring は継承するので、暗い面の外側に一度置けば中の要素へ伝わる。 */
+:root {
+  --focus-ring: var(--color-forest);
+}
+
+.bg-forest,
+.bg-forest-deep,
+.bg-ink {
+  --focus-ring: var(--color-cream);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* iOS Safari で入力欄をタップしたときの自動ズームを防ぐ。
+   16px 未満のフォントサイズだとズームが起きる。 */
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
+  font-family: inherit;
+}
+
+/* ================================================================
+   Components
+   ---------------------------------------------------------------
+   独自クラスは必ず @layer components に置く。
+   レイヤー外に書くと position/display 等が Tailwind のユーティリティ
+   （@layer utilities）を打ち消し、レイアウトが壊れる。
+================================================================ */
+
+@layer components {
+  /* 紙のような微細な質感 */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.045'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 240px 240px;
+  }
+
+  /* 記事本文（コラム・規約ページ） */
+  .prose-farm > * + * {
+    margin-top: 1.5rem;
+  }
+
+  .prose-farm h2 {
+    font-family: var(--font-mincho);
+    font-size: 1.375rem;
+    line-height: 1.7;
+    margin-top: 3.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+  }
+
+  .prose-farm h3 {
+    font-family: var(--font-mincho);
+    font-size: 1.125rem;
+    line-height: 1.8;
+    margin-top: 2.5rem;
+  }
+
+  .prose-farm p {
+    line-height: 2.05;
+  }
+
+  .prose-farm a {
+    color: var(--color-lychee-deep);
+    text-underline-offset: 0.25em;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+  }
+
+  .prose-farm a:hover {
+    color: var(--color-lychee);
+  }
+
+  @media (min-width: 768px) {
+    .prose-farm h2 {
+      font-size: 1.625rem;
+    }
+  }
+}
+
+/* ================================================================
+   Reveal — スクロールに合わせた控えめな出現
+
+   要素を隠すルールは .js（JavaScript が動くときだけ <html> に付与）
+   の配下に限定する。JSが無効・失敗・読み込み前でも本文が消えない。
+================================================================ */
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  transition:
+    opacity 0.9s var(--ease-quiet),
+    transform 0.9s var(--ease-quiet);
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+.js .reveal.is-inview {
+  opacity: 1;
+  transform: none;
+}
+
+.js .reveal-line {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.2s var(--ease-quiet);
+  transition-delay: var(--reveal-delay, 0.15s);
+}
+
+.js .reveal-line.is-inview,
+.js .is-inview .reveal-line {
+  transform: scaleX(1);
+}
+
+/* 中央揃えの見出しでは、罫線も中央から伸ばす。
+   .reveal-line 側のセレクタ（.js .reveal-line）に勝つよう、
+   同じ詳細度以上で書く必要がある。 */
+.js .reveal-line.reveal-line-center {
+  transform-origin: center;
+}
+
+/* 写真の控えめなパララックス。
+   CSSだけで完結させ、スクロールイベントは使わない。 */
+.js .parallax-media {
+  transition: transform 1.4s var(--ease-quiet);
+  transform: scale(1.06);
+}
+
+.js .is-inview .parallax-media {
+  transform: scale(1);
+}
+
+/* ================================================================
+   Hero — 初回表示のフェード（JS不使用）
+================================================================ */
+
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-fade {
+  animation: hero-fade-up 1.1s var(--ease-quiet) both;
+  animation-delay: var(--hero-delay, 0s);
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top center;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top center;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom center;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom center;
+  }
+}
+
+.scroll-cue-bar {
+  animation: scroll-cue 2.6s ease-in-out infinite;
+}
+
+/* ================================================================
+   Reduced motion
+================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal,
+  .js .reveal-line,
+  .js .parallax-media,
+  .reveal,
+  .reveal-line,
+  .hero-fade {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .scroll-cue-bar {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* ================================================================
+   Utilities
+================================================================ */
+
+.hairline-b {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+.hairline-t {
+  border-top: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+/* 数字を等幅にする。価格・数量が揃って見える */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
