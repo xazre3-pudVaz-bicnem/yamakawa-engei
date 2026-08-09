@@ -440,11 +440,16 @@ export const contactConfig = {
    ナビゲーション
 ================================================================ */
 
-/** ヘッダーの主要導線 */
+/**
+ * ヘッダーの主要導線
+ *
+ * ライチの解説は /lychee（ライチ完全ガイド）が入口になっており、
+ * 個別ページへはガイドの目次から進める。
+ * ヘッダーにガイドの下層を並べると項目が増えすぎるため、ここには出さない。
+ */
 export const navigation = [
   { href: "/shop", label: "オンラインショップ", labelEn: "Shop" },
-  { href: "/lychee", label: "ライチについて", labelEn: "Lychee" },
-  { href: "/how-to-eat", label: "食べ方・保存", labelEn: "How to eat" },
+  { href: "/lychee", label: "ライチ完全ガイド", labelEn: "Lychee guide" },
   { href: "/about", label: "山川園芸について", labelEn: "About" },
   { href: "/access", label: "農園・アクセス", labelEn: "Access" },
 ] as const;
@@ -458,11 +463,17 @@ export const footerNavigation = [
     links: [{ href: "/products/nama-lychee-500g", label: "生ライチ 500g" }],
   },
   {
+    // SEOのためのリンク集にはしない。
+    // 実際によく読まれる導線だけを、ガイドの目次への入口とあわせて置く。
     title: "ライチを知る",
     links: [
-      { href: "/lychee", label: "ライチについて" },
-      { href: "/how-to-eat", label: "食べ方・保存方法" },
-      { href: "/column", label: "コラム" },
+      { href: "/lychee", label: "ライチ完全ガイド" },
+      { href: "/lychee/nutrition", label: "ライチの栄養" },
+      { href: "/lychee/how-to-eat", label: "ライチの食べ方" },
+      { href: "/lychee/season", label: "ライチの旬" },
+      { href: "/lychee/storage", label: "ライチの保存方法" },
+      { href: "/lychee/fresh", label: "生ライチとは" },
+      { href: "/lychee/domestic", label: "国産ライチ" },
     ],
   },
   {

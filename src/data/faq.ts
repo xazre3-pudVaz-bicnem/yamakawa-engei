@@ -1,4 +1,4 @@
-/**
+﻿/**
  * よくある質問
  *
  * ─────────────────────────────────────────────
@@ -62,7 +62,7 @@ export const faqs: FaqItem[] = [
     question: "どうやって食べますか？皮はむきにくいですか？",
     answer:
       "包丁は要りません。ヘタのついていた側から爪を入れると、皮に切れ目が入ります。あとはみかんのように指でむくだけ。中には種があるので、種を避けながらお召し上がりください。",
-    link: { href: "/how-to-eat", label: "ライチの食べ方" },
+    link: { href: "/lychee/how-to-eat", label: "ライチの食べ方" },
   },
   {
     id: "storage",
@@ -71,7 +71,7 @@ export const faqs: FaqItem[] = [
     // [公式] 商品ページの保存方法の記載にもとづく
     answer:
       "冷蔵庫で保存し、約1週間を目安にお召し上がりください。乾燥すると果皮の色が変わりやすいので、ジッパー付きの袋などに入れて冷蔵庫へ入れてください。食べきれない分は、皮つきのまま冷凍しておくこともできます。",
-    link: { href: "/how-to-eat", label: "保存方法" },
+    link: { href: "/lychee/how-to-eat", label: "保存方法" },
   },
   {
     id: "chill",
@@ -79,7 +79,7 @@ export const faqs: FaqItem[] = [
     question: "食べる前に冷やしたほうがいいですか？",
     answer:
       "冷蔵庫でしっかり冷やしてからのほうが、みずみずしさを感じやすくなります。お召し上がりになる少し前に冷蔵庫から出す、という手間は要りません。",
-    link: { href: "/how-to-eat", label: "おいしい食べ方" },
+    link: { href: "/lychee/how-to-eat", label: "おいしい食べ方" },
   },
   {
     id: "variety",

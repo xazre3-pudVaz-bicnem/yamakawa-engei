@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Photo from "@/components/ui/Photo";
 import Reveal from "@/components/ui/Reveal";
 
@@ -18,7 +18,7 @@ const QUESTIONS: Array<{ q: string; a: string; href: string }> = [
   {
     q: "どうやって食べるの？",
     a: "包丁は要りません。ヘタのあった側から爪を入れると皮に切れ目が入るので、あとは指でむくだけです。",
-    href: "/how-to-eat",
+    href: "/lychee/how-to-eat",
   },
   {
     q: "どんな味がするの？",
@@ -28,17 +28,17 @@ const QUESTIONS: Array<{ q: string; a: string; href: string }> = [
   {
     q: "届いたら、どうすればいい？",
     a: "箱から出して冷蔵庫へ。乾燥を防ぐため、ジッパー付きの袋などに入れて保存してください。",
-    href: "/how-to-eat",
+    href: "/lychee/how-to-eat",
   },
   {
     q: "どれくらい日もちする？",
     a: "冷蔵庫で約1週間が目安です。食べきれない分は、皮つきのまま冷凍しておくこともできます。",
-    href: "/how-to-eat",
+    href: "/lychee/how-to-eat",
   },
   {
     q: "冷やしたほうがおいしい？",
     a: "しっかり冷やしてからのほうが、みずみずしさを感じやすくなります。",
-    href: "/how-to-eat",
+    href: "/lychee/how-to-eat",
   },
 ];
 
@@ -97,7 +97,7 @@ export default function FirstTimeSection() {
                 ライチについて
               </Link>
               <Link
-                href="/how-to-eat"
+                href="/lychee/how-to-eat"
                 className="inline-flex items-center justify-center border border-ink/20 px-7 py-3.5 text-[0.88rem] tracking-[0.08em] text-ink transition-colors duration-300 hover:border-forest hover:text-forest"
               >
                 食べ方・保存方法

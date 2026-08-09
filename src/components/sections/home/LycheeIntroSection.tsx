@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Photo from "@/components/ui/Photo";
 import Reveal from "@/components/ui/Reveal";
 import { salesStatus } from "@/data/siteConfig";
@@ -55,7 +55,7 @@ export default function LycheeIntroSection() {
               生ライチと冷凍ライチの違いを見る
             </Link>
             <Link
-              href="/how-to-eat"
+              href="/lychee/how-to-eat"
               className="text-[0.9rem] text-lychee-deep underline underline-offset-8 transition-colors hover:text-lychee"
             >
               食べ方・保存方法を見る

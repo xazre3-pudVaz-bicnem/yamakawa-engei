@@ -5,6 +5,7 @@ import LycheeIntroSection from "@/components/sections/home/LycheeIntroSection";
 import OurLycheeSection from "@/components/sections/home/OurLycheeSection";
 import ProductsSection from "@/components/sections/home/ProductsSection";
 import FirstTimeSection from "@/components/sections/home/FirstTimeSection";
+import LycheeGuideSection from "@/components/sections/home/LycheeGuideSection";
 import EnjoySection from "@/components/sections/home/EnjoySection";
 import GiftSection from "@/components/sections/home/GiftSection";
 import StorySection from "@/components/sections/home/StorySection";
@@ -37,6 +38,11 @@ export default function HomePage() {
 
       {/* 3. 生のライチ、食べたことありますか？ */}
       <LycheeIntroSection />
+
+      {/* 3-2. ライチを知る（ライチ完全ガイドへの入口）
+             「生のライチとは」の直後に置くことで、
+             もっと知りたくなった人をそのまま解説へ渡せる */}
+      <LycheeGuideSection />
 
       {/* 4. 山川園芸のライチ */}
       <OurLycheeSection />

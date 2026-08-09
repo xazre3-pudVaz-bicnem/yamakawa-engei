@@ -78,10 +78,10 @@ export default function GiftSection() {
                 商品を見る
               </Link>
               <Link
-                href="/contact"
+                href="/lychee/gift"
                 className="inline-flex items-center justify-center border border-ink/20 px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-ink transition-colors duration-300 hover:border-forest hover:text-forest"
               >
-                贈り物について相談する
+                贈り物に選ぶときのポイント
               </Link>
             </div>
           </Reveal>

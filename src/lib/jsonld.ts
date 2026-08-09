@@ -20,6 +20,7 @@ import {
   visibleProducts,
 } from "@/data/products";
 import type { ColumnArticle } from "@/data/column";
+import { GUIDE_ROOT, guidePath, type GuidePage } from "@/data/lycheeGuide";
 
 function postalAddress() {
   return {
@@ -177,6 +178,38 @@ export function faqJsonLd(items: Array<{ question: string; answer: string }>) {
       name: item.question,
       acceptedAnswer: { "@type": "Answer", text: item.answer },
     })),
+  };
+}
+
+/**
+ * ライチ完全ガイドの各ページ（Article）
+ *
+ * author / publisher は農園そのもの（Organization）にしている。
+ * 実在しない執筆者・監修者を Person として立てないこと。
+ * review / aggregateRating も出力しない。
+ */
+export function guideArticleJsonLd(page: GuidePage) {
+  const url = absoluteUrl(guidePath(page.slug));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${url}#article`,
+    headline: page.h1,
+    description: page.description,
+    inLanguage: "ja",
+    datePublished: page.publishedAt,
+    dateModified: page.updatedAt,
+    author: { "@id": ORGANIZATION_ID },
+    publisher: { "@id": ORGANIZATION_ID },
+    mainEntityOfPage: url,
+    about: { "@type": "Thing", name: "ライチ" },
+    ...(page.hero.src ? { image: absoluteUrl(page.hero.src) } : {}),
+    isPartOf: {
+      "@type": "WebPage",
+      "@id": absoluteUrl(GUIDE_ROOT),
+      name: "ライチ完全ガイド",
+    },
   };
 }
 

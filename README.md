@@ -19,6 +19,8 @@ npm run typecheck  # 型チェック
 
 | やりたいこと | 開くファイル |
 | --- | --- |
+| ライチ解説ページを追加・修正する | `src/data/lycheeGuide.ts` ＋ `src/app/lychee/<slug>/page.tsx` |
+| 栄養の数値を更新する | `src/data/nutrition.ts`（出典の確認が必須） |
 | 販売状況を変える（販売中／予約受付中／近日開始／販売終了） | `src/data/siteConfig.ts` の `salesStatus.phase` |
 | 商品を追加・変更する（価格・在庫・内容量） | `src/data/products.ts` |
 | 送料を設定する | `src/data/siteConfig.ts` の `shippingConfig` |
@@ -122,16 +124,57 @@ export const salesStatus = {
 - Googleショッピング用フィード：`/feed/products.xml`
   （価格と写真が揃った商品だけが載ります）
 
+---
+
+## ライチ完全ガイド（`/lychee`）
+
+ライチについて調べる人を広く集め、山川園芸の生ライチにつなげるための
+コンテンツクラスターです。**1キーワード＝1ページの薄い量産はしません。**
+同じ検索意図のキーワードは1ページに統合しています。
+
+| URL | 主な検索意図 |
+| --- | --- |
+| `/lychee` | ライチ（総合ハブ） |
+| `/lychee/nutrition` | ライチ 栄養／カロリー／ビタミンC／葉酸／糖質 |
+| `/lychee/how-to-eat` | ライチ 食べ方／皮 むき方／種 |
+| `/lychee/season` | ライチ 旬／時期／収穫時期 |
+| `/lychee/storage` | ライチ 保存方法／日持ち／冷蔵／冷凍 |
+| `/lychee/fresh` | 生ライチ／生ライチとは |
+| `/lychee/fresh-vs-frozen` | 生ライチ 冷凍 違い |
+| `/lychee/domestic` | 国産ライチ／産地 |
+| `/lychee/kagoshima` | 鹿児島 ライチ |
+| `/lychee/ibusuki` | 指宿 ライチ／指宿 熱帯果樹 |
+| `/lychee/how-to-choose` | ライチ 選び方／見分け方 |
+| `/lychee/taste` | ライチ 味／食感 |
+| `/lychee/gift` | ライチ ギフト／贈り物 |
+| `/lychee/recipes` | ライチ 楽しみ方／デザート |
+
+**ページを追加するとき**
+
+1. `src/data/lycheeGuide.ts` に1件追加（title・description・キーワード・関連ページ）
+2. `src/app/lychee/<slug>/page.tsx` を作り、`GuideLayout` で包んで本文だけ書く
+
+パンくず・Article構造化データ・更新日・関連ページ・商品への導線・sitemapは
+`GuideLayout` とデータ側が自動で面倒を見ます。
+
+**追加する前に必ず** `lycheeGuide.ts` の `intent` 欄を確認してください。
+同じ検索意図のページを増やすと共倒れになります（カニバリゼーション）。
+
+**栄養ページの数値**は `src/data/nutrition.ts` にあり、
+文部科学省 食品成分データベースからの転記です。
+AIの記憶や一般ブログの数値を書かないでください。健康情報（YMYL）です。
+
+---
+
 ページごとの検索意図は重ならないよう分けています。
 
 | ページ | 狙う検索意図 |
 | --- | --- |
 | `/` | 鹿児島 ライチ／指宿 ライチ |
 | `/shop` `/products/*` | 生ライチ 通販／お取り寄せ／産地直送 |
-| `/lychee` | 生ライチとは／国産ライチ／冷凍との違い |
-| `/how-to-eat` | ライチ 食べ方／皮のむき方／保存方法 |
+| `/lychee/*` | ライチの知識（上の表） |
 | `/about` `/access` | 山川園芸／指宿 ライチ農園 |
-| `/column/*` | 旬はいつ／ギフト／指宿の気候 |
+| `/column/*` | 農園の記録（今年の出来・収穫の様子） |
 
 ---
 

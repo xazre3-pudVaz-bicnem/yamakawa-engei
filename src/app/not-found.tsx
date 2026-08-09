@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import LinkButton from "@/components/ui/LinkButton";
 
 export const metadata = {
@@ -32,7 +32,7 @@ export default function NotFound() {
       <ul className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[0.85rem] text-moss">
         {[
           { href: "/lychee", label: "ライチについて" },
-          { href: "/how-to-eat", label: "食べ方・保存方法" },
+          { href: "/lychee/how-to-eat", label: "食べ方・保存方法" },
           { href: "/about", label: "山川園芸について" },
           { href: "/faq", label: "よくある質問" },
           { href: "/contact", label: "お問い合わせ" },

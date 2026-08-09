@@ -6,6 +6,7 @@ import { useCart } from "./CartProvider";
 import QuantityStepper from "./QuantityStepper";
 import { availabilityLabel, isBuyable, type Product } from "@/data/products";
 import { siteConfig } from "@/data/siteConfig";
+import { track } from "@/lib/analytics";
 
 /**
  * 数量選択＋カートに入れる
@@ -74,6 +75,19 @@ export default function AddToCart({ product }: { product: Product }) {
         onClick={() => {
           add(product.slug, quantity);
           setAdded(true);
+          // GA4（タグ未設置のあいだは何も起きない）
+          track("add_to_cart", {
+            currency: "JPY",
+            value: (product.price ?? 0) * quantity,
+            items: [
+              {
+                item_id: product.id,
+                item_name: product.name,
+                price: product.price ?? undefined,
+                quantity,
+              },
+            ],
+          });
         }}
         className="mt-5 flex w-full items-center justify-center gap-2 border border-lychee bg-lychee px-8 py-4 text-[0.95rem] tracking-[0.1em] text-white transition-colors duration-300 hover:border-lychee-deep hover:bg-lychee-deep"
       >

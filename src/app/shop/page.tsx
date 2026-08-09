@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import ProductRow from "@/components/product/ProductRow";
 import Reveal from "@/components/ui/Reveal";
@@ -135,10 +135,16 @@ export default function ShopPage() {
               <dd className="mt-3 text-[0.88rem] leading-[1.95] text-ink/80">
                 皮のむき方や保存の仕方は、こちらでご案内しています。
                 <Link
-                  href="/how-to-eat"
+                  href="/lychee/how-to-eat"
                   className="mt-2 block text-lychee-deep underline underline-offset-4"
                 >
-                  食べ方・保存方法
+                  ライチの食べ方・皮のむき方
+                </Link>
+                <Link
+                  href="/lychee/storage"
+                  className="mt-1 block text-lychee-deep underline underline-offset-4"
+                >
+                  ライチの保存方法・日持ち
                 </Link>
               </dd>
             </div>
@@ -157,6 +163,40 @@ export default function ShopPage() {
               </dd>
             </div>
           </dl>
+        </Reveal>
+
+        {/* 商品 → 解説ページ。ライチを知らない人が判断できる材料を渡す */}
+        <Reveal className="mt-16 border-t border-ink/12 pt-12">
+          <h2 className="font-mincho text-[1.25rem] leading-snug text-forest md:text-[1.45rem]">
+            ライチについて調べる
+          </h2>
+          <p className="mt-4 max-w-[40rem] text-[0.9rem] leading-[2] text-moss">
+            ライチを買うのが初めての方へ。
+            旬・栄養・食べ方・保存方法を、育てている農園としてまとめました。
+          </p>
+          <ul className="mt-7 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+            {[
+              { href: "/lychee", label: "ライチ完全ガイド（目次）" },
+              { href: "/lychee/fresh", label: "生ライチとはどんな果物か" },
+              { href: "/lychee/nutrition", label: "ライチの栄養・カロリー" },
+              { href: "/lychee/season", label: "ライチの旬と収穫時期" },
+              { href: "/lychee/gift", label: "ライチをギフトに贈るときは" },
+              { href: "/lychee/kagoshima", label: "鹿児島のライチについて" },
+            ].map((link) => (
+              <li key={link.href} className="flex gap-3">
+                <span
+                  aria-hidden="true"
+                  className="mt-3.5 h-px w-4 shrink-0 bg-lychee/60"
+                />
+                <Link
+                  href={link.href}
+                  className="text-[0.9rem] leading-[1.9] text-forest underline-offset-4 hover:text-lychee-deep hover:underline"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </Reveal>
       </div>
     </>

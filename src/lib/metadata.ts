@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { isPublicSite, siteConfig } from "@/data/siteConfig";
+import { guidePath, type GuidePage } from "@/data/lycheeGuide";
 
 /**
  * ページ metadata の組み立て
@@ -44,5 +45,31 @@ export function buildMetadata({
     ...(isPublicSite
       ? { alternates: { canonical: path }, robots: { index: true, follow: true } }
       : { robots: { index: false, follow: false } }),
+  };
+}
+
+/**
+ * ライチ完全ガイドのページ metadata。
+ * data/lycheeGuide.ts の登録内容から作るので、
+ * title・description の重複や canonical の付け忘れが起きない。
+ */
+export function buildGuideMetadata(page: GuidePage): Metadata {
+  const meta = buildMetadata({
+    title: page.title,
+    description: page.description,
+    path: guidePath(page.slug),
+    keywords: page.keywords,
+    type: "article",
+  });
+
+  return {
+    ...meta,
+    openGraph: {
+      ...meta.openGraph,
+      type: "article",
+      publishedTime: page.publishedAt,
+      modifiedTime: page.updatedAt,
+      ...(page.hero.src ? { images: [{ url: page.hero.src }] } : {}),
+    },
   };
 }

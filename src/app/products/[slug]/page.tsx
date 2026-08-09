@@ -50,10 +50,18 @@ export async function generateMetadata({
   const price = formatPrice(product.price);
 
   return buildMetadata({
-    title: `${product.name}｜国産の生ライチ通販`,
-    description: `${product.lead}${product.volume ? `内容量${product.volume}。` : ""}${price ? `${price}（税込・送料別）。` : ""}鹿児島県指宿市山川の山川園芸から産地直送でお届けします。`,
+    // キーワードを詰め込まず、商品名＋検索意図＋産地の順で組み立てる
+    title: `${product.name}｜国産生ライチ通販｜鹿児島・指宿の産地直送`,
+    description: `${product.lead}${product.volume ? `内容量${product.volume}。` : ""}${price ? `${price}（税込・送料別）。` : ""}鹿児島県指宿市山川の山川園芸から、旬のあいだだけ産地直送でお届けします。`,
     path: `/products/${product.slug}`,
-    keywords: ["生ライチ 通販", "国産ライチ", "鹿児島 ライチ", "ライチ お取り寄せ"],
+    keywords: [
+      "生ライチ 通販",
+      "国産ライチ 通販",
+      "ライチ お取り寄せ",
+      "ライチ 産地直送",
+      "鹿児島 ライチ 通販",
+      "指宿 生ライチ",
+    ],
   });
 }
 
@@ -246,14 +254,66 @@ export default async function ProductPage({
               </ul>
               <p className="mt-6">
                 <Link
-                  href="/how-to-eat"
+                  href="/lychee/how-to-eat"
                   className="text-[0.88rem] text-lychee-deep underline underline-offset-8 hover:text-lychee"
                 >
-                  皮のむき方・保存方法をくわしく見る
+                  ライチの皮のむき方をくわしく見る
                 </Link>
               </p>
             </Reveal>
           </div>
+
+          {/* 商品 → 解説ページへの内部リンク。
+              解説ページ側からも ShopCta で商品へ戻ってくる双方向の構造。 */}
+          <Reveal className="mt-14 border-t border-ink/12 pt-10">
+            <h3 className="font-mincho text-[1.15rem] text-forest">
+              この商品について、もっと知る
+            </h3>
+            <p className="mt-4 text-[0.9rem] leading-[2] text-moss">
+              ライチが初めての方に向けて、農園として調べたことをまとめています。
+            </p>
+            <ul className="mt-7 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+              {[
+                {
+                  href: "/lychee/nutrition",
+                  label: "ライチの栄養（カロリー・ビタミンC・葉酸）を見る",
+                },
+                {
+                  href: "/lychee/how-to-eat",
+                  label: "ライチの皮のむき方と種の取り方を見る",
+                },
+                {
+                  href: "/lychee/storage",
+                  label: "届いたライチの保存方法と日持ちを見る",
+                },
+                {
+                  href: "/lychee/season",
+                  label: "ライチの旬と収穫時期を見る",
+                },
+                {
+                  href: "/lychee/fresh",
+                  label: "生ライチとはどんな果物かを読む",
+                },
+                {
+                  href: "/lychee/kagoshima",
+                  label: "鹿児島のライチについて読む",
+                },
+              ].map((link) => (
+                <li key={link.href} className="flex gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="mt-3.5 h-px w-4 shrink-0 bg-lychee/60"
+                  />
+                  <Link
+                    href={link.href}
+                    className="text-[0.9rem] leading-[1.9] text-forest underline-offset-4 hover:text-lychee-deep hover:underline"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
 
           {product.cautions.length > 0 && (
             <Reveal className="mt-14 border border-ink/12 bg-paper px-6 py-7">

@@ -1,386 +1,295 @@
 import Link from "next/link";
-import JsonLd from "@/components/ui/JsonLd";
-import PageHero from "@/components/ui/PageHero";
+import AnswerBox from "@/components/guide/AnswerBox";
+import GuideLayout from "@/components/guide/GuideLayout";
+import FarmNote from "@/components/guide/FarmNote";
 import Photo from "@/components/ui/Photo";
-import Reveal from "@/components/ui/Reveal";
-import { faqJsonLd } from "@/lib/jsonld";
-import { buildMetadata } from "@/lib/metadata";
-import { salesStatus } from "@/data/siteConfig";
+import {
+  getGuidePage,
+  guideChildren,
+  guidePath,
+} from "@/data/lycheeGuide";
+import { nutritionSource, nutrients } from "@/data/nutrition";
 import { lycheeVarieties, varietyNote } from "@/data/products";
+import { salesStatus, siteConfig } from "@/data/siteConfig";
+import { buildGuideMetadata } from "@/lib/metadata";
 
 /**
- * ライチについて（/lychee）
+ * ライチ完全ガイド（/lychee）— ピラーページ
  *
- * 検索意図：「ライチとは」「生ライチ」「国産ライチ」
- * ※ 食べ方・保存方法は /how-to-eat が担当する。ここでは深追いしない
- *   （同じ検索意図のページを2つ作らないため）。
+ * ─────────────────────────────────────────────
+ * このページの役割
+ * ─────────────────────────────────────────────
+ * 「ライチ」で調べに来た人を受け止め、
+ * それぞれの疑問に対応する詳細ページへ渡すハブ。
  *
- * 内容はライチという果物についての一般的な情報。
- * 山川園芸の品種・糖度・栽培方法など未確認のことは書かない。
+ * ここで各テーマを書き切らないこと。
+ * 深い話は詳細ページの仕事で、このページはあくまで案内役。
+ * 詳細ページと同じ内容を書くと、検索意図が重なって共倒れになる。
+ *
+ * 目次は data/lycheeGuide.ts から自動生成しているので、
+ * ページを追加すればここにも自動的に載る。
  */
 
-export const metadata = buildMetadata({
-  title: "生ライチとは｜国産ライチの旬・冷凍との違い",
-  description:
-    "生ライチとはどんな果物か、冷凍ライチとの違い、国産ライチの旬の時期をやさしく解説します。ライチを食べたことがない方に向けた入門ページです。",
-  path: "/lychee",
-  keywords: [
-    "生ライチ",
-    "国産ライチ",
-    "ライチとは",
-    "ライチ 旬",
-    "生ライチ 冷凍 違い",
-    "ライチ 品種",
-    "桂味 ライチ",
-    "ノーマイチー",
-    "三月紅",
-  ],
-});
+const page = getGuidePage("")!;
 
-/** このページに表示するQ&A（画面と構造化データを同じ配列から作る） */
-const PAGE_FAQ = [
-  {
-    question: "生ライチと冷凍ライチは何が違いますか？",
-    answer:
-      "生ライチは、木で色づいた実をそのままお届けするものです。冷凍ライチは収穫後に凍らせたもので、日本ではこちらが広く流通しています。生は皮をむいたときの香りと、果汁のみずみずしさが持ち味です。",
-  },
-  {
-    question: "国産のライチはなぜ珍しいのですか？",
-    answer:
-      "ライチは熱帯・亜熱帯の果物のため、日本で育てられる地域が限られています。加えて収穫できる期間がごく短く、収穫後の日もちも長くありません。そのため国産の生ライチは市場に出る量が少なくなっています。",
-  },
-  {
-    question: "ライチの旬はいつですか？",
-    answer:
-      "国内で育つライチは、産地によって6月下旬から8月ごろに収穫期を迎えます。山川園芸からお届けできるのは、7月上旬からお盆ごろまでです。その年の天候によって前後します。",
-  },
-  {
-    question: "ライチにはどんな品種がありますか？",
-    answer:
-      "山川園芸では、7月ごろは三月紅と在来種（佐多、黒葉）、8月ごろは宮崎ライチと呼ばれる種、桂味、ノーマイチーを収穫しています。熟す順に穫っていくため、お届けする品種は時期によって変わります。品種を指定してのご購入はお受けしておりません。",
-  },
-];
+export const metadata = buildGuideMetadata(page);
 
-export default function LycheePage() {
+/** 本文に数字をベタ書きしないため、栄養値は data から引く */
+function nutrient(name: string): string {
+  const row = nutrients.find((item) => item.name === name);
+  return row ? `${row.value}${row.unit}` : "—";
+}
+
+export default function LycheeGuidePage() {
   return (
-    <>
-      <JsonLd data={faqJsonLd(PAGE_FAQ)} />
+    <GuideLayout
+      page={page}
+      farmNote={
+        <FarmNote title="このガイドを書いている農園について">
+          <p>
+            山川園芸は{siteConfig.address.full}にある農園です。
+            ハウスでライチをはじめとする熱帯性の果樹を育てています。
+          </p>
+          <p>
+            収穫の時期によって品種が変わり、
+            {lycheeVarieties
+              .map((group) => `${group.period}は${group.names.join("・")}`)
+              .join("、")}
+            を収穫しています。{varietyNote}
+          </p>
+          <p>
+            お届けできるのは{salesStatus.seasonLabel}まで。
+            穫れた実は市場や仲卸を通さず、農園から直接お送りしています。
+          </p>
+        </FarmNote>
+      }
+    >
+      <AnswerBox question="ライチとはどんな果物ですか？">
+        <p>
+          ライチは、暖かい地域で育つ果物です。
+          赤くてざらざらした皮の中に白く半透明の果肉があり、中心に種がひとつ入っています。
+          甘みがはっきりしていて、皮をむいた瞬間に華やかな香りが立ちのぼるのが特徴です。
+        </p>
+        <p className="mt-2">
+          国内では鹿児島・宮崎・沖縄など温暖な地域で栽培され、
+          初夏から夏にかけて収穫されます。
+        </p>
+      </AnswerBox>
 
-      <PageHero
-        eyebrow="About lychee"
-        title={
-          <>
-            生のライチって、
-            <br className="sm:hidden" />
-            どんな果物？
-          </>
-        }
-        lead="ライチを食べたことがない方、冷凍のものしか知らない方に向けて。むずかしい言葉を使わずにご説明します。"
-        crumbs={[{ name: "ライチについて", path: "/lychee" }]}
-      />
-
-      {/* ---- ライチとは ---- */}
-      <section className="mx-auto w-full max-w-5xl px-5 py-20 md:px-8 md:py-28">
-        <Reveal>
-          <h2 className="font-mincho text-[1.5rem] leading-[1.6] text-forest md:text-[1.9rem]">
-            ライチとは、南の国で育つ果物です
-          </h2>
-          <span
-            aria-hidden="true"
-            className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
-          />
-        </Reveal>
-
-        <div className="mt-10 grid gap-12 md:grid-cols-[1.1fr_1fr] md:items-start md:gap-14">
-          <Reveal>
-            <div className="space-y-6 text-[0.96rem] leading-[2.1] text-ink/85">
-              <p>
-                ライチは、暖かい地域で育つ果物です。漢字では「茘枝」と書きます。
-                外側の皮は赤く、少しごつごつしていて、なかの実は白くてやわらかく、
-                たっぷりの果汁を含んでいます。
-              </p>
-              <p>
-                中心には大きめの種がひとつ。皮をむいて、種を避けながら食べます。
-                包丁もお皿も要りません。
-              </p>
-              <p>
-                日本では、鹿児島・宮崎・沖縄など南の地域で育てられています。
-                とはいえ育てられる場所は限られていて、
-                国産のライチは市場に出る量がとても少ない果物です。
-              </p>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.08}>
-            {/* [TODO] 皮をむいた果肉・種が分かる写真が撮れたら
-                public/images/lychee/lychee-cut.jpg に置いて差し替える。 */}
-            <Photo
-              src="/images/lychee/lychee-closeup.jpg"
-              alt="生ライチの果皮のアップ"
-              aspect="aspect-[4/5]"
-              sizes="(min-width: 768px) 40vw, 100vw"
-            />
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---- 生と冷凍の違い ---- */}
-      <section className="bg-paper-warm">
-        <div className="mx-auto w-full max-w-5xl px-5 py-20 md:px-8 md:py-28">
-          <Reveal>
-            <p className="font-serif-en text-[0.7rem] uppercase tracking-[0.34em] text-lychee-deep">
-              Fresh or frozen
-            </p>
-            <h2 className="mt-5 font-mincho text-[1.5rem] leading-[1.6] text-forest md:text-[1.9rem]">
-              冷凍ライチしか
-              <br className="sm:hidden" />
-              食べたことがない方へ
-            </h2>
-            <span
-              aria-hidden="true"
-              className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
-            />
-            <p className="mt-8 max-w-[40rem] text-[0.95rem] leading-[2.1] text-ink/85">
-              スーパーや飲食店でよく見かけるライチの多くは、収穫後に凍らせたものです。
-              生のライチは、そもそも状態が違います。
-            </p>
-          </Reveal>
-
-          <Reveal className="mt-12">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[34rem] border-collapse text-left text-[0.9rem]">
-                <caption className="sr-only">
-                  生ライチと冷凍ライチの違い
-                </caption>
-                <thead>
-                  <tr className="border-y border-ink/15">
-                    <th scope="col" className="w-28 py-4 pr-4 font-normal text-moss">
-                      <span className="sr-only">比べる項目</span>
-                    </th>
-                    <th
-                      scope="col"
-                      className="py-4 pr-6 font-mincho text-[1rem] text-lychee-deep"
-                    >
-                      生ライチ
-                    </th>
-                    <th
-                      scope="col"
-                      className="py-4 font-mincho text-[1rem] text-forest"
-                    >
-                      冷凍ライチ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink/12">
-                  {[
-                    {
-                      label: "状態",
-                      fresh: "収穫したままの実",
-                      frozen: "収穫後に凍らせた実",
-                    },
-                    {
-                      label: "香り",
-                      fresh: "皮をむくと立ちのぼる",
-                      frozen: "解凍しても穏やか",
-                    },
-                    {
-                      label: "食感",
-                      fresh: "みずみずしく、果汁が多い",
-                      frozen: "解凍具合によって変わる",
-                    },
-                    {
-                      label: "出回る時期",
-                      fresh: "夏のごく短い期間だけ",
-                      frozen: "一年をとおして",
-                    },
-                    {
-                      label: "日もち",
-                      fresh: "冷蔵で約1週間",
-                      frozen: "冷凍のまま長期間",
-                    },
-                  ].map((row) => (
-                    <tr key={row.label}>
-                      <th
-                        scope="row"
-                        className="py-4 pr-4 align-top font-normal text-moss"
-                      >
-                        {row.label}
-                      </th>
-                      <td className="py-4 pr-6 align-top leading-[1.9]">
-                        {row.fresh}
-                      </td>
-                      <td className="py-4 align-top leading-[1.9] text-ink/75">
-                        {row.frozen}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-6 text-[0.82rem] leading-[1.9] text-moss">
-              ※ 冷凍ライチが劣るという意味ではありません。
-              凍らせたまま食べるおいしさもあります。生と冷凍は別の食べものだとお考えください。
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ---- 旬 ---- */}
-      <section className="mx-auto w-full max-w-5xl px-5 py-20 md:px-8 md:py-28">
-        <div className="grid gap-12 md:grid-cols-2 md:items-center md:gap-16">
-          <Reveal>
-            <Photo
-              src="/images/lychee/lychee-on-tree.jpg"
-              alt="木で色づいたライチの実"
-              aspect="aspect-[4/3]"
-              sizes="(min-width: 768px) 48vw, 100vw"
-              tone="leaf"
-            />
-          </Reveal>
-          <Reveal delay={0.08}>
-            <h2 className="font-mincho text-[1.5rem] leading-[1.6] text-forest md:text-[1.85rem]">
-              旬は、初夏のほんの数週間
-            </h2>
-            <span
-              aria-hidden="true"
-              className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
-            />
-            <div className="mt-8 space-y-5 text-[0.95rem] leading-[2.1] text-ink/85">
-              <p>
-                山川園芸のライチをお届けできるのは、{salesStatus.seasonLabel}
-                まで。その年の気温や雨の降り方によって、時期は前後します。
-              </p>
-              <p>
-                収穫できる期間が短く、穫ったあとの日もちも長くありません。
-                だからこそ、産地から直接お届けする形が向いている果物です。
-              </p>
-            </div>
-            <p className="mt-8">
+      {/* ================= 目次 ================= */}
+      <nav
+        aria-labelledby="guide-toc"
+        className="mt-12 border border-ink/12 bg-paper-warm px-6 py-7 md:px-8"
+      >
+        <h2
+          id="guide-toc"
+          className="font-mincho text-[1.1rem] tracking-[0.04em] text-forest"
+        >
+          このガイドの目次
+        </h2>
+        <ul className="mt-5 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {guideChildren.map((item) => (
+            <li key={item.slug}>
               <Link
-                href="/column/lychee-season"
-                className="text-[0.9rem] text-lychee-deep underline underline-offset-8 hover:text-lychee"
+                href={guidePath(item.slug)}
+                className="text-[0.9rem] text-forest underline-offset-4 hover:text-lychee-deep hover:underline"
               >
-                ライチの旬について、くわしく読む
+                {item.navLabel}
               </Link>
-            </p>
-          </Reveal>
-        </div>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-        {/* ---- 品種 ----
-            収穫の時期で品種が変わる。data/products.ts の lycheeVarieties から
-            生成しているので、品種を足すときはそちらを1行足すだけでよい。 */}
-        <Reveal className="mt-20 border-t border-ink/12 pt-14 md:mt-28">
-          <h2 className="font-mincho text-[1.5rem] leading-[1.6] text-forest md:text-[1.85rem]">
-            時期によって、品種が変わります
-          </h2>
-          <span
-            aria-hidden="true"
-            className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
-          />
-          <p className="mt-8 max-w-[40rem] text-[0.95rem] leading-[2.1] text-ink/85">
-            山川園芸では、収穫の時期に合わせて何種類かのライチを育てています。
-            熟す順に穫っていくため、お届けする品種は時期によって変わります。
-          </p>
+      {/* ================= 本文 ================= */}
+      <div className="prose-farm mt-14 text-[0.95rem] text-ink/85">
+        <h2>ライチとは</h2>
+        <p>
+          ライチは、暖かい地域で育つ果物です。漢字では「茘枝」と書きます。
+          木になった実を房ごと収穫し、皮をむいて中の果肉を食べます。
+        </p>
+        <p>
+          日本では鹿児島・宮崎・沖縄など南のほうの地域で栽培されています。
+          冬の冷え込みに弱いため、育てられる地域が限られる果樹です。
+        </p>
 
-          <dl className="mt-10 divide-y divide-ink/12 border-y border-ink/12">
-            {lycheeVarieties.map((group) => (
-              <div
-                key={group.period}
-                className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-10"
-              >
-                <dt className="w-28 shrink-0 font-mincho text-[1.02rem] text-lychee-deep">
-                  {group.period}
-                </dt>
-                <dd className="text-[0.95rem] leading-[1.95]">
-                  {group.names.join("／")}
-                </dd>
-              </div>
-            ))}
-          </dl>
+        <h3>見た目・皮・果肉・種</h3>
+        <ul className="space-y-3">
+          {[
+            "皮 … 赤くてざらざらした外側。食べません。",
+            "果肉 … 白く半透明の部分。ここを食べます。果汁が多く、やわらかい食感です。",
+            "種 … 中心にあるつやのある種。食べません。",
+          ].map((item) => (
+            <li key={item} className="flex gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-3.5 h-px w-4 shrink-0 bg-lychee/60"
+              />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
 
-          <p className="mt-7 border border-ink/12 bg-paper-warm px-5 py-4 text-[0.86rem] leading-[1.95] text-moss">
-            {varietyNote}
-          </p>
-        </Reveal>
-      </section>
+        <h3>どんな味？</h3>
+        <p>
+          甘みがはっきりしていて、酸味は控えめ。
+          いちばんの特徴は華やかな香りです。
+          果肉はみずみずしく、噛むとわずかに弾力があります。
+        </p>
+        <p>
+          <Link href="/lychee/taste">
+            ライチの味・香り・食感をくわしく読む
+          </Link>
+        </p>
+      </div>
 
-      {/* ---- Q&A ---- */}
-      <section className="bg-paper-warm">
-        <div className="mx-auto w-full max-w-4xl px-5 py-20 md:px-8 md:py-24">
-          <Reveal>
-            <h2 className="font-mincho text-[1.4rem] leading-snug text-forest md:text-[1.75rem]">
-              ライチについて、よくいただく質問
-            </h2>
-            <span
-              aria-hidden="true"
-              className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
-            />
-          </Reveal>
+      <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <Photo
+          src="/images/lychee/lychee-on-tree.jpg"
+          alt="鹿児島県指宿市の山川園芸で木になっているライチの実"
+          aspect="aspect-[4/3]"
+          sizes="(min-width: 768px) 45vw, 100vw"
+        />
+        <Photo
+          src="/images/lychee/lychee-in-hand.jpg"
+          alt="手に持った生ライチ一粒。大きさが分かる写真"
+          aspect="aspect-[4/3]"
+          sizes="(min-width: 768px) 45vw, 100vw"
+        />
+      </div>
 
-          <Reveal className="mt-10">
-            <dl className="border-t border-ink/12">
-              {PAGE_FAQ.map((item) => (
-                <div key={item.question} className="border-b border-ink/12 py-7">
-                  <dt className="font-mincho text-[1.05rem] leading-[1.7] text-forest">
-                    {item.question}
-                  </dt>
-                  <dd className="mt-3 text-[0.92rem] leading-[2] text-ink/80">
-                    {item.answer}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
-        </div>
-      </section>
+      <div className="prose-farm mt-14 text-[0.95rem] text-ink/85">
+        <h2>ライチの旬</h2>
+        <p>
+          国内で育つライチの収穫期は初夏から夏にかけてで、
+          産地や品種によって6月下旬から8月ごろまで幅があります。
+          収穫できる期間が短く、収穫後の日もちも長くないため、
+          生のライチが出回るのはごく限られた期間です。
+        </p>
+        <p>
+          <Link href="/lychee/season">
+            ライチの旬と収穫時期をくわしく読む
+          </Link>
+        </p>
 
-      {/* ---- 次に読む ---- */}
-      <section className="mx-auto w-full max-w-5xl px-5 py-20 md:px-8 md:py-24">
-        <Reveal>
-          <h2 className="font-mincho text-[1.3rem] text-forest">次に読む</h2>
-          <ul className="mt-8 divide-y divide-ink/12 border-y border-ink/12">
-            {[
-              {
-                href: "/how-to-eat",
-                title: "ライチの食べ方・保存方法",
-                desc: "皮のむき方から、届いたあとの保存の仕方まで。",
-              },
-              {
-                href: "/shop",
-                title: "オンラインショップ",
-                desc: "指宿・山川の農園から、旬の生ライチを産地直送で。",
-              },
-              {
-                href: "/column",
-                title: "コラム",
-                desc: "旬のこと、贈り物のこと、指宿の気候のこと。",
-              },
-            ].map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="group flex items-baseline justify-between gap-6 py-6"
-                >
-                  <span>
-                    <span className="font-mincho text-[1.05rem] text-forest underline-offset-8 group-hover:underline">
-                      {item.title}
-                    </span>
-                    <span className="mt-2 block text-[0.87rem] text-moss">
-                      {item.desc}
-                    </span>
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="shrink-0 text-lychee-deep"
-                  >
-                    →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </section>
-    </>
+        <h2>国産ライチと輸入ライチ</h2>
+        <p>
+          スーパーで一年じゅう見かけるライチの多くは、
+          海外で収穫して冷凍したものです。
+          国産のライチは栽培地域が限られる一方、
+          生のまま産地から届けられるという違いがあります。
+        </p>
+        <p>
+          <Link href="/lychee/domestic">
+            国産ライチの産地と輸入との違いを読む
+          </Link>
+        </p>
+
+        <h2>生ライチとは</h2>
+        <p>
+          収穫した実を凍らせずに、そのままの状態で届けるライチのことです。
+          日本で流通しているライチの多くは冷凍のため、
+          生の実に出会える期間はごく短くなります。
+        </p>
+        <p>
+          <Link href="/lychee/fresh">生ライチとは何かを読む</Link>
+          ／
+          <Link href="/lychee/fresh-vs-frozen">
+            生と冷凍の違いを比較表で見る
+          </Link>
+        </p>
+
+        <h2>ライチの栄養</h2>
+        <p>
+          ライチ（生）は可食部100gあたり{nutrient("エネルギー")}で、
+          ビタミンC {nutrient("ビタミンC")}、葉酸 {nutrient("葉酸")}、
+          カリウム {nutrient("カリウム")}を含みます。
+          水分が{nutrient("水分")}と多いのも特徴です。
+        </p>
+        <p className="text-[0.85rem] text-moss">
+          数値は{nutritionSource.name}（{nutritionSource.edition}）によります。
+        </p>
+        <p>
+          <Link href="/lychee/nutrition">
+            ライチの栄養成分表と栄養素の説明を見る
+          </Link>
+        </p>
+
+        <h2>ライチの食べ方</h2>
+        <p>
+          皮をむいて、中の白い果肉を食べます。包丁は要りません。
+          ヘタのついていた側から爪を入れると皮に切れ目が入るので、
+          あとはみかんのように指でむくだけです。
+          中心に種があるので、取り除いてお召し上がりください。
+        </p>
+        <p>
+          <Link href="/lychee/how-to-eat">
+            ライチの皮のむき方を手順で見る
+          </Link>
+          ／
+          <Link href="/lychee/recipes">
+            冷やす・凍らせるなどの楽しみ方を見る
+          </Link>
+        </p>
+
+        <h2>ライチの保存方法</h2>
+        <p>
+          冷蔵庫で保存します。乾燥すると果皮の色が変わりやすいため、
+          袋や保存容器に入れてから冷蔵庫へ。
+          日持ちの目安は数日から1週間ほどです。
+          食べきれない分は、皮つきのまま冷凍できます。
+        </p>
+        <p>
+          <Link href="/lychee/storage">
+            ライチの保存方法と日持ちをくわしく読む
+          </Link>
+        </p>
+
+        <h2>おいしいライチの選び方</h2>
+        <p>
+          皮に張りがあり、手に持ったときに重みを感じるものを選びます。
+          果皮の色は収穫からの時間で変わっていくため、
+          色だけで判断しないのがポイントです。
+        </p>
+        <p>
+          <Link href="/lychee/how-to-choose">
+            新鮮なライチの見分け方を読む
+          </Link>
+        </p>
+
+        <h2>鹿児島・指宿とライチ</h2>
+        <p>
+          鹿児島県は、国内でライチを栽培している数少ない地域のひとつです。
+          山川園芸のある指宿市山川は薩摩半島の南端にあり、
+          三方を海に囲まれた温暖な土地です。
+        </p>
+        <p>
+          <Link href="/lychee/kagoshima">鹿児島のライチについて読む</Link>
+          ／
+          <Link href="/lychee/ibusuki">
+            指宿という土地と熱帯果樹について読む
+          </Link>
+        </p>
+
+        <h2>ライチを贈り物にする</h2>
+        <p>
+          食べたことのある方が少なく、旬が短い果物なので、
+          夏のご挨拶や季節の贈り物として選ばれています。
+          贈る前に確かめておきたいこともあります。
+        </p>
+        <p>
+          <Link href="/lychee/gift">
+            ライチをギフトに贈るときのポイントを読む
+          </Link>
+        </p>
+
+        <h2>生ライチはどこで買える？</h2>
+        <p>
+          店頭に並ぶことは少なく、産地からの直送で買うのが一般的です。
+          山川園芸では、鹿児島県指宿市山川の農園から
+          旬のあいだだけ産地直送でお届けしています。
+        </p>
+      </div>
+    </GuideLayout>
   );
 }

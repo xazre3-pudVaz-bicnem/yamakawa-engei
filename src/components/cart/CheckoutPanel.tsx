@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "./CartProvider";
+import BeginCheckoutEvent from "./BeginCheckoutEvent";
 import {
   checkoutConfig,
   hasShippingAmount,
@@ -279,6 +280,17 @@ export default function CheckoutPanel() {
         >
           カートを修正する
         </Link>
+
+        {/* GA4: 購入手続きの画面に到達したことを送る（タグ未設置なら何も起きない） */}
+        <BeginCheckoutEvent
+          value={subtotal ?? 0}
+          items={lines.map((line) => ({
+            item_id: line.product.id,
+            item_name: line.product.name,
+            price: line.product.price ?? undefined,
+            quantity: line.quantity,
+          }))}
+        />
       </aside>
     </div>
   );

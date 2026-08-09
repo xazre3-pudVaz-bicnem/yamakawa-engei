@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
 import { contactConfig, siteConfig } from "@/data/siteConfig";
@@ -161,7 +161,7 @@ export default function ContactPage() {
               { href: "/faq", label: "よくある質問", desc: "お問い合わせの多いものをまとめています" },
               { href: "/shipping", label: "配送・送料について", desc: "発送の時期と送料のご案内" },
               { href: "/guide", label: "お買い物ガイド", desc: "ご注文からお届けまでの流れ" },
-              { href: "/how-to-eat", label: "食べ方・保存方法", desc: "皮のむき方から保存まで" },
+              { href: "/lychee/how-to-eat", label: "食べ方・保存方法", desc: "皮のむき方から保存まで" },
             ].map((item) => (
               <li key={item.href}>
                 <Link

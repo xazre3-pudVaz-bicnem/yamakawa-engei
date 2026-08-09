@@ -192,7 +192,7 @@ export default function AccessPage() {
               </div>
               <p className="mt-7">
                 <Link
-                  href="/column/ibusuki-tropical-fruit"
+                  href="/lychee/ibusuki"
                   className="text-[0.9rem] text-lychee-deep underline underline-offset-8 hover:text-lychee"
                 >
                   指宿で南国のフルーツが育つ理由を読む

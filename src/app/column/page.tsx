@@ -12,29 +12,52 @@ import { formatDate } from "@/lib/utils";
  * sitemap.xml のすべてに自動で反映される。
  */
 
-export const metadata = buildMetadata({
-  title: "コラム｜ライチと農園のはなし",
+/**
+ * ライチそのものの解説は /lychee のガイドが担当する。
+ * ここは「農園の記録」を載せる場所。
+ * 記事が0件のあいだは noindex にして、
+ * 中身のないページを検索結果に出さないようにしている（sitemapにも載せない）。
+ */
+const baseMetadata = buildMetadata({
+  title: "農園のコラム｜山川園芸の記録",
   description:
-    "ライチの旬、贈り物としてのライチ、指宿で南国のフルーツが育つ理由。山川園芸がお届けする読みものです。",
+    "鹿児島県指宿市山川のライチ農園、山川園芸の記録です。収穫の様子や、その年の実りについてお伝えします。",
   path: "/column",
-  keywords: ["ライチ 旬", "ライチ ギフト", "指宿 フルーツ", "熱帯果樹"],
 });
+
+export const metadata =
+  sortedColumns.length > 0
+    ? baseMetadata
+    : { ...baseMetadata, robots: { index: false, follow: true } };
 
 export default function ColumnPage() {
   return (
     <>
       <PageHero
         eyebrow="Column"
-        title="ライチと農園のはなし"
-        lead="旬のこと、贈り物のこと、指宿という土地のこと。少しずつ書きためています。"
-        crumbs={[{ name: "コラム", path: "/column" }]}
+        title="農園の記録"
+        lead="収穫の様子や、その年の実りのこと。指宿の農園から少しずつ書きためています。"
+        crumbs={[{ name: "農園のコラム", path: "/column" }]}
       />
 
       <div className="mx-auto w-full max-w-4xl px-5 py-20 md:px-8 md:py-28">
         {sortedColumns.length === 0 ? (
-          <p className="text-[0.93rem] text-moss">
-            現在、掲載している記事はありません。
-          </p>
+          <div>
+            <p className="text-[0.93rem] leading-[2] text-moss">
+              現在、掲載している記事はありません。
+              農園の日々の様子は公式Instagramでご覧いただけます。
+            </p>
+            <p className="mt-7 text-[0.9rem] leading-[2] text-ink/80">
+              ライチという果物についての解説は、
+              <Link
+                href="/lychee"
+                className="mx-1 text-lychee-deep underline underline-offset-4 hover:text-lychee"
+              >
+                ライチ完全ガイド
+              </Link>
+              にまとめています。旬・栄養・食べ方・保存方法などをご覧いただけます。
+            </p>
+          </div>
         ) : (
           <ul className="border-t border-ink/12">
             {sortedColumns.map((article) => (
