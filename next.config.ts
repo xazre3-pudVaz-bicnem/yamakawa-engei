@@ -13,7 +13,13 @@ import type { NextConfig } from "next";
  * 一度公開したURLは消さずに、必ずここへ転送先を書くこと。
  * permanent: true は301（恒久的な移動）を意味する。
  */
-const redirects: Array<{ source: string; destination: string }> = [
+type Redirect = {
+  source: string;
+  destination: string;
+  has?: Array<{ type: "host"; value: string }>;
+};
+
+const redirects: Redirect[] = [
   // 食べ方と保存方法を、検索意図ごとに2ページへ分割した
   { source: "/how-to-eat", destination: "/lychee/how-to-eat" },
 
@@ -21,6 +27,23 @@ const redirects: Array<{ source: string; destination: string }> = [
   { source: "/column/lychee-season", destination: "/lychee/season" },
   { source: "/column/lychee-as-a-gift", destination: "/lychee/gift" },
   { source: "/column/ibusuki-tropical-fruit", destination: "/lychee/ibusuki" },
+
+  /**
+   * Vercelの標準ドメインを本番ドメインへ寄せる
+   *
+   * yamakawa-engei.vercel.app でもサイト全体が表示できてしまうため、
+   * 何もしないとサイト丸ごとの重複がクロール対象になる。
+   * canonical で本番ドメインを指してはいるが、
+   * 転送しておくほうが確実で、被リンクも本番ドメインに集まる。
+   *
+   * プレビュー環境のホスト名（…-git-ブランチ名-….vercel.app）は
+   * これに一致しないため、プレビューは今までどおり閲覧できる。
+   */
+  {
+    source: "/:path*",
+    has: [{ type: "host", value: "yamakawa-engei.vercel.app" }],
+    destination: "https://www.yamakawaengei.com/:path*",
+  },
 ];
 
 const nextConfig: NextConfig = {

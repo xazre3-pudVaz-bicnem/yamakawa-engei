@@ -35,8 +35,22 @@
      noindex が付くため、プレビューURLが検索結果に出ることはない。
 ================================================================ */
 
-/** 本番ドメイン [確認済]。末尾のスラッシュは付けない */
-const PRODUCTION_URL = "https://yamakawaengei.com";
+/**
+ * 本番ドメイン [確認済]。末尾のスラッシュは付けない。
+ *
+ * ★ 必ず「実際に配信されているURL」と一致させること ★
+ *
+ * Vercel側では www.yamakawaengei.com が主ドメインになっており、
+ * yamakawaengei.com（www なし）は www へ308で転送される。
+ * ここを www なしにすると、canonical と sitemap が
+ * 「転送されるURL」を指すことになり、Search Console で
+ * 「ページにリダイレクトがあります」として弾かれる。
+ *
+ * www なしを正としたい場合は、先に Vercel の Domains 設定で
+ * 主ドメインを yamakawaengei.com に切り替えてから、ここを直すこと。
+ * 順番を逆にすると、一時的に不整合な canonical を配信してしまう。
+ */
+const PRODUCTION_URL = "https://www.yamakawaengei.com";
 
 const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
