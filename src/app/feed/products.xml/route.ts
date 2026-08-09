@@ -19,8 +19,7 @@ import { absoluteUrl, isPublicSite, siteConfig } from "@/data/siteConfig";
  * ─────────────────────────────────────────────
  * 出力の条件
  * ─────────────────────────────────────────────
- * ・NEXT_PUBLIC_SITE_URL が未設定のあいだは空のフィードを返す
- *   （プレビューURLの商品をGoogleに登録させないため）
+ * ・siteConfig の isPublicSite が false のあいだは空のフィードを返す
  * ・価格が未確定（price が null）の商品は含めない
  *   （Merchant Center は price を必須項目としているため）
  * ・画像が1枚もない商品も含めない

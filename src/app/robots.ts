@@ -4,8 +4,8 @@ import { isPublicSite, siteUrl } from "@/data/siteConfig";
 /**
  * robots.txt
  *
- * 本番ドメイン（NEXT_PUBLIC_SITE_URL）が未設定のあいだは全ページを Disallow にする。
- * Vercel のプレビューURLが検索結果に出てしまうのを構造的に防ぐため。
+ * siteConfig の isPublicSite を false にすると全ページ Disallow になる
+ * （公開前に一時的にサイト全体を隠したいときのスイッチ）。
  * カート・購入手続き・API はインデックス対象にしない。
  */
 export default function robots(): MetadataRoute.Robots {

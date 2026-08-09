@@ -4,10 +4,9 @@ import { isPublicSite, siteConfig } from "@/data/siteConfig";
 /**
  * ページ metadata の組み立て
  *
- * NEXT_PUBLIC_SITE_URL が未設定のあいだは
- *   - canonical / OGPのURL を出力しない（誤ったドメインを正規版として伝えないため）
- *   - robots を noindex にする（プレビューURLの誤インデックス防止）
- * 本番ドメインを設定すれば、自動的にすべて有効になる。
+ * canonical・OGPのURLは data/siteConfig.ts の siteUrl（本番ドメイン）を基準にする。
+ * isPublicSite を false にすると、canonical/OGPを出さず noindex になる
+ * （公開前に一時的にサイト全体を隠したいときのスイッチ）。
  */
 export function buildMetadata({
   title,

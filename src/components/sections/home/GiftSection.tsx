@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Photo from "@/components/ui/Photo";
 import Reveal from "@/components/ui/Reveal";
-import { UNCONFIRMED_NOTE } from "@/data/siteConfig";
+import { siteConfig } from "@/data/siteConfig";
 
 /**
  * 贈り物としてのライチ
@@ -63,9 +63,11 @@ export default function GiftSection() {
               ))}
             </ul>
 
+            {/* のし・ギフト包装は非対応。ギフト訴求のすぐそばに必ず明記する。 */}
             <p className="mt-7 border border-ink/12 bg-paper px-5 py-4 text-[0.83rem] leading-[1.9] text-moss">
-              のし・ギフト包装・メッセージカードの対応については確認中です。
-              ご希望のある方は{UNCONFIRMED_NOTE}
+              {siteConfig.giftWrapping.note}
+              包装は、ジッパー付きの袋のほか、店頭販売と同じ包装にも対応しています。
+              ご希望がありましたら、ご注文の際にお知らせください。
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">

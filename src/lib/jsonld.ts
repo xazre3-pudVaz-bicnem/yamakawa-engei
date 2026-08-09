@@ -9,8 +9,8 @@
  *   siteConfig / products 側で null のものは、ここでも自動的に落ちる。
  * - 画面に表示していない内容を構造化データにだけ書かない。
  *   FAQ は「回答が確定していて画面にも出しているもの」だけを渡すこと。
- * - 本番URL（NEXT_PUBLIC_SITE_URL）が未設定のあいだは、
- *   絶対URLではなく相対パスになる（誤ったドメインを伝えないため）。
+ * - URLは data/siteConfig.ts の siteUrl（本番ドメイン）から組み立てる。
+ *   ドメインを変えるときは siteConfig 側の1行だけを直せばよい。
  */
 
 import { absoluteUrl, siteConfig, siteUrl } from "@/data/siteConfig";
@@ -35,14 +35,14 @@ function postalAddress() {
 }
 
 /** 組織・農園の @id（他のスキーマから参照する） */
-const ORGANIZATION_ID = `${siteUrl ?? ""}/#organization`;
+const ORGANIZATION_ID = `${siteUrl}/#organization`;
 
 /** WebSite */
 export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${siteUrl ?? ""}/#website`,
+    "@id": `${siteUrl}/#website`,
     name: siteConfig.name,
     alternateName: [siteConfig.nameKana, siteConfig.nameEn],
     url: absoluteUrl("/"),

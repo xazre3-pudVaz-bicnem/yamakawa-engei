@@ -23,29 +23,41 @@
 /* ================================================================
    本番URL
    ---------------------------------------------------------------
-   NEXT_PUBLIC_SITE_URL が未設定のあいだは
-   canonical / OGP / sitemap.xml を出力せず、robots.txt は
-   全ページ Disallow になる。プレビューURLが誤ってインデックス
-   されるのを構造的に防ぐための仕組み。
-   本番ドメインが決まったら Vercel の環境変数に設定すること。
-   例: NEXT_PUBLIC_SITE_URL=https://yamakawaengei.jp
+   canonical・OGP・sitemap.xml・構造化データ・商品フィードが
+   すべてこの値を使う。ここが実際の公開ドメインと違うと、
+   検索エンジンに別のURLを正規版として伝えてしまう。
+
+   ドメインを変えたときは、下の PRODUCTION_URL を書き換えるだけでよい。
+   一時的に別のURLで動かしたい場合だけ、環境変数
+   NEXT_PUBLIC_SITE_URL を設定すると、そちらが優先される。
+
+   ※ Vercelのプレビュー環境には Vercel 側で自動的に
+     noindex が付くため、プレビューURLが検索結果に出ることはない。
 ================================================================ */
+
+/** 本番ドメイン [確認済]。末尾のスラッシュは付けない */
+const PRODUCTION_URL = "https://yamakawaengei.com";
 
 const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
-/** 本番URL（末尾スラッシュなし）。未設定なら null */
-export const siteUrl = rawSiteUrl ? rawSiteUrl.replace(/\/+$/, "") : null;
+/** 本番URL（末尾スラッシュなし） */
+export const siteUrl = (rawSiteUrl || PRODUCTION_URL).replace(/\/+$/, "");
 
-/** 本番ドメインが設定済みか（SEO出力のスイッチ） */
-export const isPublicSite = siteUrl !== null;
+/**
+ * SEO関連の出力を行うか。
+ * 何らかの理由で一時的にサイト全体を検索エンジンから隠したいときは、
+ * ここを false にすると canonical・OGP・sitemap を出力せず、
+ * robots.txt が全ページ Disallow になる。
+ */
+export const isPublicSite = true;
 
-/** metadataBase 用。未設定時はローカルにフォールバック */
-export const metadataBaseUrl = new URL(siteUrl ?? "http://localhost:3000");
+/** metadataBase 用 */
+export const metadataBaseUrl = new URL(siteUrl);
 
-/** 絶対URLを組み立てる（未設定時は相対パスのまま返す） */
+/** 絶対URLを組み立てる */
 export function absoluteUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  return siteUrl ? `${siteUrl}${normalized === "/" ? "" : normalized}` : normalized;
+  return `${siteUrl}${normalized === "/" ? "" : normalized}`;
 }
 
 /* ================================================================
@@ -124,6 +136,32 @@ export const siteConfig = {
   /** [TODO] 定休日は未確認。公式ショップの表記は「不定休」[公式] */
   closedDays: "不定休",
 
+  /**
+   * 農園での直売・見学 [確認済]
+   * 事前にご連絡いただければ対応。ライチ狩りの可否は未確定のため、
+   * 「できます」とは書かず、あわせてご相談いただく案内にしている。
+   */
+  farmVisit: {
+    available: true,
+    note: "直売・見学は、事前にご連絡いただければ対応しています。ライチ狩りができるかどうかは時期によって変わりますので、あわせてお問い合わせください。",
+  },
+
+  /**
+   * のし・ギフト包装 [確認済]
+   * 対応していないため、ギフト訴求の箇所では必ずこの旨を明記する。
+   */
+  giftWrapping: {
+    available: false,
+    note: "のし・ギフト包装・メッセージカードには対応しておりません。",
+  },
+
+  /**
+   * 包装 [確認済]
+   * ジッパー付きの袋のほか、店頭販売と同じ包装にも対応。
+   */
+  packagingNote:
+    "包装は、ジッパー付きの袋のほか、店頭販売と同じ包装にも対応しています。ご希望がありましたら、ご注文の際にお知らせください。",
+
   /** 公式Instagram [確認済] */
   instagram: {
     url: "https://www.instagram.com/azisaibiyori/",
@@ -193,21 +231,20 @@ export const salesStatus = {
    * ★ここを書き換える★
    * "on_sale" | "preorder" | "coming_soon" | "closed"
    */
-  phase: "coming_soon" as SalesPhase,
+  phase: "on_sale" as SalesPhase,
 
   /**
    * [TODO] 今季の販売開始日・終了日が決まったら入力。
-   * 例: "2026-06-25"。未定のあいだは null のままでよい。
+   * 例: "2026-07-05"。未定のあいだは null のままでよい。
    */
   saleStartDate: null as string | null,
   saleEndDate: null as string | null,
 
   /**
-   * 旬の時期の目安。
-   * 国内のライチは6月下旬〜7月ごろが収穫期にあたる一般的な情報にもとづく表記。
-   * [TODO] 山川園芸の今季の実際の収穫時期が分かったら、より具体的な表記に更新する。
+   * 山川園芸のライチをお届けできる時期 [確認済]
+   * サイト内で旬に触れる箇所は、すべてこの値を参照している。
    */
-  seasonLabel: "6月下旬〜7月ごろ",
+  seasonLabel: "7月上旬からお盆ごろ",
 } as const;
 
 /** 販売状況ごとの表示文言 */
@@ -244,7 +281,7 @@ export const salesPhaseCopy: Record<
   coming_soon: {
     label: "近日販売開始",
     heading: "今年のライチは、もうすぐです。",
-    body: "指宿のライチは6月下旬から7月ごろが旬。販売の開始は公式Instagramと本サイトでお知らせします。",
+    body: "山川園芸のライチをお届けできるのは7月上旬からお盆ごろまで。販売の開始は公式Instagramと本サイトでお知らせします。",
     ctaLabel: "商品を見る",
     ctaHref: "/shop",
   },
@@ -273,40 +310,67 @@ export const isPurchasable =
 
 export const shippingConfig = {
   /**
-   * 送料。[TODO] 未確定のため null。
-   * 全国一律なら { type: "flat", fee: 1000 } のように設定する。
-   * 地域別なら type を "by_region" にして regions に金額を入れる。
+   * 送料の扱い。
+   *   "external"    … 金額は公式オンラインショップの「送料・配送方法について」に掲載
+   *   "flat"        … 全国一律（flatFee に金額を入れる）
+   *   "by_region"   … 地域別（regions に金額を入れる）
+   *   "free"        … 送料無料
+   *   "unconfirmed" … 未確定（画面には金額を出さない）
+   *
+   * 現在は "external"。本サイトに金額表を載せる場合は、
+   * 公式オンラインショップの表記と必ず一致させること（食い違うと事故になる）。
    */
-  type: "unconfirmed" as "unconfirmed" | "flat" | "by_region" | "free",
-  /** 全国一律送料（税込）。未確定なら null */
+  type: "external" as
+    | "external"
+    | "unconfirmed"
+    | "flat"
+    | "by_region"
+    | "free",
+  /** 全国一律送料（税込）。未設定なら null */
   flatFee: null as number | null,
-  /** 地域別送料。未確定なら空配列 */
+  /** 地域別送料。未設定なら空配列 */
   regions: [] as Array<{ name: string; fee: number }>,
   /** 送料無料になる購入金額。未設定なら null */
   freeShippingThreshold: null as number | null,
 
   /**
-   * 配送温度帯。[TODO] 未確認。
-   * 公式ショップの商品説明に「コールドチェーンでの管理」への言及があるが、
-   * 冷蔵便か冷凍便かの明記がないため、ここでは断定しない。
+   * 配送方法 [確認済]
+   * 温度帯もこの一文に含めているため、別項目は設けない。
    */
-  temperature: null as string | null,
-
-  /** 配送会社。[TODO] 未確認 */
-  carrier: null as string | null,
+  carrier: "ヤマト運輸のクール便",
 
   /** 発送までの目安 [公式・BASEショップの商品ページ表記] */
   dispatchLead: "ご注文から2〜3営業日以内に発送",
 
-  /** 発送日指定の可否。[TODO] 未確認 */
+  /**
+   * 発送日指定の可否。
+   * 可否そのものは未確定のため、ご相談いただく案内にとどめている。
+   */
   canSpecifyDeliveryDate: null as boolean | null,
 
-  /** 配送可能地域。[TODO] 未確認（離島・一部地域の可否を要確認） */
-  deliverableArea: null as string | null,
+  /** 配送可能地域 [確認済] */
+  deliverableArea: "離島を除く全国",
+
+  /**
+   * 送料の詳細の掲載先 [確認済]
+   * 公式オンラインショップ（BASE）の各商品ページにある
+   * 「送料・配送方法について」に金額が掲載されている。
+   * 本サイトに金額表を載せる場合は type を "flat" などに変更すること。
+   */
+  guideUrl: "https://yamaen.base.shop/items/all",
 
   /** 共通注記 */
   note: "収穫の状況や天候により、発送が前後する場合があります。",
 };
+
+/**
+ * 本サイトの画面上で送料の金額を出せるか。
+ * false のあいだ、カート・購入手続きの合計に送料を足さず「別途」と表示する。
+ */
+export const hasShippingAmount =
+  shippingConfig.type === "free" ||
+  (shippingConfig.type === "flat" && shippingConfig.flatFee !== null) ||
+  (shippingConfig.type === "by_region" && shippingConfig.regions.length > 0);
 
 /* ================================================================
    決済
@@ -353,14 +417,13 @@ export const checkoutConfig = {
 /* ================================================================
    お問い合わせ
    ---------------------------------------------------------------
-   [TODO] 公開できるメールアドレスが未確認のため、現在は
-   電話・Instagram・公式オンラインショップの問い合わせフォームを案内している。
-   email に値を入れると、お問い合わせページにメールの導線が追加される。
+   電話・メール・Instagram・公式オンラインショップのフォームを案内している。
+   email を null にすると、メールの導線だけが画面から消える。
 ================================================================ */
 
 export const contactConfig = {
-  /** 公開してよいメールアドレス。未確認なら null */
-  email: null as string | null,
+  /** 公開してよいメールアドレス [確認済] */
+  email: "azisaibiyori@go5.enjoy.ne.jp" as string | null,
 
   /**
    * 自社フォームを設置する場合の送信先。
@@ -370,7 +433,7 @@ export const contactConfig = {
   formEndpoint: null as string | null,
 
   /** 公式オンラインショップ（BASE）の問い合わせフォーム [公式] */
-  shopContactUrl: "https://yamaen.base.shop/inquiry",
+  shopContactUrl: "https://thebase.com/inquiry/yamaen-base-shop",
 };
 
 /* ================================================================
@@ -389,12 +452,10 @@ export const navigation = [
 /** フッターのリンク群 */
 export const footerNavigation = [
   {
+    // オンラインショップ・カートへのリンクはオーナーのご指示により一旦削除。
+    // 復活させる場合は、下に { href: "/shop", ... } を戻すだけでよい。
     title: "商品",
-    links: [
-      { href: "/shop", label: "オンラインショップ" },
-      { href: "/products/nama-lychee-500g", label: "生ライチ 500g" },
-      { href: "/cart", label: "カート" },
-    ],
+    links: [{ href: "/products/nama-lychee-500g", label: "生ライチ 500g" }],
   },
   {
     title: "ライチを知る",

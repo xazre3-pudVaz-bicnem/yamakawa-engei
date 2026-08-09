@@ -13,6 +13,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import {
   getProduct,
   getRelatedProducts,
+  lycheeVarieties,
   visibleProducts,
 } from "@/data/products";
 import { faqs } from "@/data/faq";
@@ -76,9 +77,18 @@ export default async function ProductPage({
     { term: "内容量", value: product.volume },
     { term: "個数の目安", value: product.countGuide },
     { term: "産地", value: product.origin },
+    {
+      term: "品種",
+      value: product.showVarieties
+        ? lycheeVarieties
+            .map((group) => `${group.period}：${group.names.join("、")}`)
+            .join(" ／ ")
+        : null,
+    },
     { term: "お届け時期", value: product.shippingSchedule },
     { term: "配送方法", value: product.shippingMethod },
     { term: "保存方法", value: product.storage },
+    { term: "包装", value: product.packaging },
   ];
 
   return (

@@ -124,13 +124,15 @@ export default function Hero() {
           </Link>
         </div>
 
+        {/* 販売状況のバッジはヒーローには置かない。
+            すぐ下の「今年のライチ販売状況」の帯と、スマホ下部のバーで
+            同じことを伝えているため、ここでは旬と産地だけに絞っている。
+            バッジを戻す場合は、下の <span> の前に
+            <span>{currentSales.label}</span> を追加する。 */}
         <p
           className="hero-fade mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.8rem] text-cream/70"
           style={{ "--hero-delay": "0.75s" } as React.CSSProperties}
         >
-          <span className="inline-flex items-center border border-lychee-soft/45 px-3 py-1 text-[0.72rem] tracking-[0.12em] text-lychee-soft">
-            {currentSales.label}
-          </span>
           <span>旬は{salesStatus.seasonLabel}／{siteConfig.origin}</span>
         </p>
       </div>

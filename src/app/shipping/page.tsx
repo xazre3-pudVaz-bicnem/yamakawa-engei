@@ -9,20 +9,24 @@ import { formatPrice } from "@/lib/utils";
  * 配送・送料について（/shipping）
  *
  * ─────────────────────────────────────────────
- * 送料を確定させたら
+ * 送料の表示
  * ─────────────────────────────────────────────
  * data/siteConfig.ts の shippingConfig を書き換えるだけで、
  * このページ・カート・購入手続き・お買い物ガイドの表示がすべて揃う。
  *
- *   全国一律のとき:
+ *   現在（"external"）:
+ *     金額は公式オンラインショップに掲載。ここでは掲載先を案内するだけ。
+ *     二重に載せて食い違うことを避けるための設定。
+ *   全国一律にするとき:
  *     type: "flat", flatFee: 1000
- *   地域別のとき:
+ *   地域別にするとき:
  *     type: "by_region", regions: [{ name: "九州", fee: 900 }, ...]
  *   送料無料のとき:
  *     type: "free"
+ *   未確定に戻すとき:
+ *     type: "unconfirmed"（金額を出さず「確認中」と表示する）
  *
- * 未確定（"unconfirmed"）のあいだは、金額を出さず「確認中」と表示する。
- * 架空の送料を載せない。
+ * 架空の送料は載せない。
  */
 
 export const metadata = buildMetadata({
@@ -37,6 +41,8 @@ export default function ShippingPage() {
   const isByRegion = shippingConfig.type === "by_region";
   const isFree = shippingConfig.type === "free";
   const isUnconfirmed = shippingConfig.type === "unconfirmed";
+  /** 金額は公式オンラインショップに掲載し、こちらからは案内だけを出す */
+  const isExternal = shippingConfig.type === "external";
 
   return (
     <>
@@ -72,33 +78,18 @@ export default function ShippingPage() {
             <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">
               <dt className="w-36 shrink-0 text-moss">配送方法</dt>
               <dd className="leading-[1.95]">
-                {shippingConfig.carrier ?? (
-                  <span className="text-moss">確認中です。{UNCONFIRMED_NOTE}</span>
-                )}
-              </dd>
-            </div>
-
-            <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">
-              <dt className="w-36 shrink-0 text-moss">温度帯</dt>
-              <dd className="leading-[1.95]">
-                {shippingConfig.temperature ?? (
-                  <span className="text-moss">確認中です。{UNCONFIRMED_NOTE}</span>
-                )}
+                {shippingConfig.carrier}でお届けします。
               </dd>
             </div>
 
             <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">
               <dt className="w-36 shrink-0 text-moss">お届け日の指定</dt>
               <dd className="leading-[1.95]">
-                {shippingConfig.canSpecifyDeliveryDate === null ? (
-                  <span className="text-moss">
-                    確認中です。ご希望のある方は、ご注文前にご相談ください。
-                  </span>
-                ) : shippingConfig.canSpecifyDeliveryDate ? (
-                  "お届け日をご指定いただけます。"
-                ) : (
-                  "収穫の状況に合わせて発送するため、お届け日のご指定は承っておりません。"
-                )}
+                {shippingConfig.canSpecifyDeliveryDate === null
+                  ? "ご希望のある方は、ご注文前にご相談ください。"
+                  : shippingConfig.canSpecifyDeliveryDate
+                    ? "お届け日をご指定いただけます。"
+                    : "収穫の状況に合わせて発送するため、お届け日のご指定は承っておりません。"}
               </dd>
             </div>
 
@@ -107,7 +98,7 @@ export default function ShippingPage() {
               <dd className="leading-[1.95]">
                 {shippingConfig.deliverableArea ?? (
                   <span className="text-moss">
-                    確認中です。離島など一部地域へのお届けについては、事前にお問い合わせください。
+                    確認中です。{UNCONFIRMED_NOTE}
                   </span>
                 )}
               </dd>
@@ -126,6 +117,25 @@ export default function ShippingPage() {
           />
 
           <div className="mt-10">
+            {isExternal && (
+              <div className="border border-ink/12 bg-paper-warm px-6 py-7">
+                <p className="text-[0.92rem] leading-[2] text-ink/80">
+                  送料は、公式オンラインショップの各商品ページにある
+                  「送料・配送方法について」に掲載しています。
+                  ご注文手続きの画面でもご確認いただけます。
+                </p>
+                <a
+                  href={shippingConfig.guideUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-flex items-center justify-center border border-forest bg-forest px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-paper transition-colors duration-300 hover:bg-forest-deep"
+                >
+                  公式オンラインショップで送料を見る
+                  <span className="sr-only">（新しいタブで開きます）</span>
+                </a>
+              </div>
+            )}
+
             {isUnconfirmed && (
               <div className="border border-ink/12 bg-paper-warm px-6 py-7">
                 <p className="text-[0.92rem] leading-[2] text-ink/80">

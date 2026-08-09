@@ -18,7 +18,7 @@ import { isPublicSite } from "@/data/siteConfig";
 export const metadata: Metadata = {
   title: "国産の生ライチ通販｜鹿児島・指宿の山川園芸",
   description:
-    "鹿児島県指宿市山川の農園から、旬の生ライチを産地直送。国産ライチの旬は6月下旬から7月ごろのごく短い期間です。食べ方・保存方法もご案内しています。",
+    "鹿児島県指宿市山川の農園から、旬の生ライチを産地直送。お届けできるのは7月上旬からお盆ごろまでのごく短い期間です。食べ方・保存方法もご案内しています。",
   ...(isPublicSite
     ? { alternates: { canonical: "/" } }
     : { robots: { index: false, follow: false } }),

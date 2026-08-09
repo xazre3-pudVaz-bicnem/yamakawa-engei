@@ -146,13 +146,26 @@ export default function GuidePage() {
                     </Link>
                   </>
                 ) : (
-                  <Link
-                    href="/shipping"
-                    className="text-lychee-deep underline underline-offset-4"
-                  >
-                    配送・送料についてをご覧ください
-                  </Link>
+                  <>
+                    {shippingConfig.carrier}でお届けします。送料の金額は
+                    <Link
+                      href="/shipping"
+                      className="mx-1 text-lychee-deep underline underline-offset-4"
+                    >
+                      配送・送料について
+                    </Link>
+                    をご覧ください。
+                  </>
                 )}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">
+              <dt className="w-32 shrink-0 text-moss">包装・のし</dt>
+              <dd className="leading-[1.95]">
+                {siteConfig.packagingNote}
+                <span className="mt-1 block text-moss">
+                  {siteConfig.giftWrapping.note}
+                </span>
               </dd>
             </div>
             <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">

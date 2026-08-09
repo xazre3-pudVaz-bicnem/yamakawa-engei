@@ -110,6 +110,7 @@ saleStart: null, // [TODO] 今季の販売開始日
 - 決済の金額は必ずサーバー側で `products.ts` から引き直す。
   クライアントから送られた価格を信用しない
 - APIキーをコードに書かない。必ず環境変数から読む
-- `NEXT_PUBLIC_SITE_URL` が未設定のあいだ、canonical・OGP・sitemap は出力せず
-  robots は Disallow になる。この仕組みを外さない
+- 本番ドメインは `src/data/siteConfig.ts` の `PRODUCTION_URL` に一元化されている。
+  canonical・OGP・sitemap・構造化データ・商品フィードがすべてこの値を使うので、
+  URLをページ側にベタ書きしない
 - 変更後は `npm run build` `npm run lint` `npm run typecheck` をすべて通す

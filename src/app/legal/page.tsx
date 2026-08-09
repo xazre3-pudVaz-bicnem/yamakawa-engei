@@ -73,17 +73,9 @@ export default function LegalPage() {
       value:
         "各商品ページに表示された価格（税込）によります。商品代金のほかに送料がかかります。",
     },
-    {
-      term: "商品代金以外の必要料金",
-      value:
-        shippingConfig.type === "unconfirmed"
-          ? null
-          : "送料（配送・送料についてのページに記載）。お支払い方法により、別途手数料がかかる場合があります。",
-      note:
-        shippingConfig.type === "unconfirmed"
-          ? "送料および各種手数料は確認中です。確定しだい掲載します。"
-          : undefined,
-    },
+    // 「商品代金以外の必要料金」の行はオーナーのご指示により削除。
+    // 送料の金額は公式オンラインショップに掲載しているため、
+    // 本サイトに二重で載せて食い違うことを避けている。
     {
       term: "お支払い方法",
       value: checkoutConfig.paymentMethods.join("／"),

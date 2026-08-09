@@ -6,6 +6,7 @@ import Reveal from "@/components/ui/Reveal";
 import { faqJsonLd } from "@/lib/jsonld";
 import { buildMetadata } from "@/lib/metadata";
 import { salesStatus } from "@/data/siteConfig";
+import { lycheeVarieties, varietyNote } from "@/data/products";
 
 /**
  * ライチについて（/lychee）
@@ -29,6 +30,10 @@ export const metadata = buildMetadata({
     "ライチとは",
     "ライチ 旬",
     "生ライチ 冷凍 違い",
+    "ライチ 品種",
+    "桂味 ライチ",
+    "ノーマイチー",
+    "三月紅",
   ],
 });
 
@@ -47,7 +52,12 @@ const PAGE_FAQ = [
   {
     question: "ライチの旬はいつですか？",
     answer:
-      "国内で育つライチは、6月下旬から7月ごろが収穫の時期です。その年の天候によって前後します。",
+      "国内で育つライチは、産地によって6月下旬から8月ごろに収穫期を迎えます。山川園芸からお届けできるのは、7月上旬からお盆ごろまでです。その年の天候によって前後します。",
+  },
+  {
+    question: "ライチにはどんな品種がありますか？",
+    answer:
+      "山川園芸では、7月ごろは三月紅と在来種（佐多、黒葉）、8月ごろは宮崎ライチと呼ばれる種、桂味、ノーマイチーを収穫しています。熟す順に穫っていくため、お届けする品種は時期によって変わります。品種を指定してのご購入はお受けしておりません。",
   },
 ];
 
@@ -180,7 +190,7 @@ export default function LycheePage() {
                     },
                     {
                       label: "出回る時期",
-                      fresh: "6月下旬〜7月ごろのみ",
+                      fresh: "夏のごく短い期間だけ",
                       frozen: "一年をとおして",
                     },
                     {
@@ -237,8 +247,8 @@ export default function LycheePage() {
             />
             <div className="mt-8 space-y-5 text-[0.95rem] leading-[2.1] text-ink/85">
               <p>
-                国内のライチが穫れるのは、{salesStatus.seasonLabel}
-                。その年の気温や雨の降り方によって、時期は前後します。
+                山川園芸のライチをお届けできるのは、{salesStatus.seasonLabel}
+                まで。その年の気温や雨の降り方によって、時期は前後します。
               </p>
               <p>
                 収穫できる期間が短く、穫ったあとの日もちも長くありません。
@@ -255,6 +265,43 @@ export default function LycheePage() {
             </p>
           </Reveal>
         </div>
+
+        {/* ---- 品種 ----
+            収穫の時期で品種が変わる。data/products.ts の lycheeVarieties から
+            生成しているので、品種を足すときはそちらを1行足すだけでよい。 */}
+        <Reveal className="mt-20 border-t border-ink/12 pt-14 md:mt-28">
+          <h2 className="font-mincho text-[1.5rem] leading-[1.6] text-forest md:text-[1.85rem]">
+            時期によって、品種が変わります
+          </h2>
+          <span
+            aria-hidden="true"
+            className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
+          />
+          <p className="mt-8 max-w-[40rem] text-[0.95rem] leading-[2.1] text-ink/85">
+            山川園芸では、収穫の時期に合わせて何種類かのライチを育てています。
+            熟す順に穫っていくため、お届けする品種は時期によって変わります。
+          </p>
+
+          <dl className="mt-10 divide-y divide-ink/12 border-y border-ink/12">
+            {lycheeVarieties.map((group) => (
+              <div
+                key={group.period}
+                className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-10"
+              >
+                <dt className="w-28 shrink-0 font-mincho text-[1.02rem] text-lychee-deep">
+                  {group.period}
+                </dt>
+                <dd className="text-[0.95rem] leading-[1.95]">
+                  {group.names.join("／")}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <p className="mt-7 border border-ink/12 bg-paper-warm px-5 py-4 text-[0.86rem] leading-[1.95] text-moss">
+            {varietyNote}
+          </p>
+        </Reveal>
       </section>
 
       {/* ---- Q&A ---- */}

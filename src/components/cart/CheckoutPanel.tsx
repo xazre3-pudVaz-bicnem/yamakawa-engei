@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "./CartProvider";
-import { checkoutConfig, shippingConfig, siteConfig } from "@/data/siteConfig";
+import {
+  checkoutConfig,
+  hasShippingAmount,
+  shippingConfig,
+  siteConfig,
+} from "@/data/siteConfig";
 import { formatPrice } from "@/lib/utils";
 
 /**
@@ -250,9 +255,9 @@ export default function CheckoutPanel() {
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-moss">送料</dt>
             <dd className="text-[0.85rem]">
-              {shippingConfig.type === "unconfirmed"
-                ? "別途"
-                : (formatPrice(shippingConfig.flatFee) ?? "別途")}
+              {hasShippingAmount
+                ? (formatPrice(shippingConfig.flatFee) ?? "別途")
+                : "別途"}
             </dd>
           </div>
         </dl>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Photo from "@/components/ui/Photo";
 import Reveal from "@/components/ui/Reveal";
+import { salesStatus } from "@/data/siteConfig";
 
 /**
  * 「生のライチ、食べたことありますか？」
@@ -40,8 +41,9 @@ export default function LycheeIntroSection() {
             </p>
             <p>
               国内で穫れる生のライチは、旬がとても短い果物です。
-              6月下旬から7月ごろ、その年の実りに合わせて、
-              ほんの数週間だけ産地から出回ります。
+              山川園芸からお届けできるのは
+              {salesStatus.seasonLabel}まで。
+              その年の実りに合わせて、ほんの数週間だけのお取り扱いです。
             </p>
           </div>
 

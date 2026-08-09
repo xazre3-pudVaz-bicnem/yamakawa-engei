@@ -108,6 +108,10 @@ export type Product = {
   origin: string;
   /** 保存方法。未確認なら null */
   storage: string | null;
+  /** 包装について。未確認なら null */
+  packaging: string | null;
+  /** この商品に lycheeVarieties（品種一覧）を表示するか */
+  showVarieties: boolean;
 
   /** 一覧・詳細の冒頭に置く一文 */
   lead: string;
@@ -170,6 +174,26 @@ export const productCategories: ProductCategory[] = [
 ];
 
 /* ================================================================
+   育てている品種 [確認済]
+   ---------------------------------------------------------------
+   収穫の時期によって品種が変わる。
+   品種のご指定は受けていないため、「〇〇をお届けします」とは書かない。
+   ここに1行足せば、商品ページ・ライチについてのページの両方に反映される。
+================================================================ */
+
+export const lycheeVarieties: Array<{ period: string; names: string[] }> = [
+  { period: "7月ごろ", names: ["三月紅", "在来種（佐多、黒葉）"] },
+  {
+    period: "8月ごろ",
+    names: ["宮崎ライチと呼ばれる種", "桂味", "ノーマイチー"],
+  },
+];
+
+/** 品種の指定について（画面と構造化データで同じ文言を使う） */
+export const varietyNote =
+  "品種を指定してのご購入はお受けしておりません。その時期に採れたもののなかから、いちばん良い状態のものをお届けします。";
+
+/* ================================================================
    商品
 ================================================================ */
 
@@ -192,16 +216,16 @@ export const products: Product[] = [
 
     // ★販売状況はここで切り替える★
     // "in_stock" | "preorder" | "sold_out" | "coming_soon" | "draft"
-    availability: "coming_soon",
+    availability: "in_stock",
     maxQuantity: 10,
 
     saleStart: null, // [TODO] 今季の販売開始日
     saleEnd: null, // [TODO] 今季の販売終了日
 
-    // [TODO] お届け時期は収穫状況によって決まるため、確定後に具体的な期間を入れる
-    shippingSchedule: null,
-    // [TODO] 配送方法・温度帯（冷蔵便かどうか）が未確認のため null
-    shippingMethod: null,
+    // [確認済] お届けできるのは7月上旬からお盆ごろまで
+    shippingSchedule: "7月上旬からお盆ごろまでのお届けです。",
+    // [確認済] ヤマト運輸のクール便のみで配送
+    shippingMethod: "ヤマト運輸のクール便でお届けします。",
 
     origin: siteConfig.origin,
 
@@ -209,12 +233,17 @@ export const products: Product[] = [
     storage:
       "冷蔵庫で約1週間を目安にお召し上がりください。乾燥すると果皮の色が変わりやすいため、ジッパー付きの袋などに入れて保存してください。",
 
+    // [確認済] ジッパー付きの袋のほか、店頭販売と同じ包装にも対応
+    packaging: siteConfig.packagingNote,
+    showVarieties: true,
+
     lead: "薩摩半島のいちばん南、指宿・山川で育った生のライチです。",
 
     description: [
       "国内で穫れる生のライチは、旬がごく短い果物です。木の上で色づいた実を収穫し、農園から直接お送りします。",
       "冷凍のライチとは香りも食感も別のもの。皮をむいた瞬間に立ちのぼる香りと、あふれるような果汁が生ライチのいちばんの持ち味です。",
       "そのままお召し上がりいただくほか、凍らせてスムージーやデザートにしても楽しめます。",
+      "収穫の時期によって品種が変わります。7月は三月紅や在来種、8月は桂味やノーマイチーなど。その時期にいちばん良い状態のものをお届けします。",
     ],
 
     features: [
@@ -231,8 +260,10 @@ export const products: Product[] = [
 
     cautions: [
       "ひと粒ずつ大きさに差があります。粒数ではなく重量（g）を基準としています。",
+      varietyNote,
       "種があります。小さなお子様やご高齢の方がお召し上がりの際は、誤って飲み込まないようご注意ください。",
       "生鮮食品です。お届け後はお早めにお召し上がりください。",
+      siteConfig.giftWrapping.note,
     ],
 
     images: [
@@ -267,7 +298,98 @@ export const products: Product[] = [
 
     condition: "new",
     gtin: null,
-    relatedSlugs: [],
+    relatedSlugs: ["nama-lychee-350g"],
+  },
+
+  /* ──────────────────────────────────────────────
+     生ライチ 350g
+     500gより少ない、はじめての方向けの量。
+  ────────────────────────────────────────────── */
+  {
+    id: "lychee-fresh-350g",
+    slug: "nama-lychee-350g",
+    name: "生ライチ 350g",
+    shortName: "生ライチ 350g",
+    category: "lychee",
+
+    price: 1800, // [確認済] 税込
+    taxIncluded: true,
+    priceNote: "表示価格は税込です。送料は別途かかります。",
+
+    volume: "350g",
+    // [TODO] 個数の目安が分かれば入れる（500gは約12〜13粒）。
+    // 推測では書かないため、確認が取れるまで空にしている。
+    countGuide: null,
+
+    // ★販売状況はここで切り替える★
+    availability: "in_stock",
+    maxQuantity: 10,
+
+    saleStart: null,
+    saleEnd: null,
+
+    shippingSchedule: "7月上旬からお盆ごろまでのお届けです。",
+    shippingMethod: "ヤマト運輸のクール便でお届けします。",
+
+    origin: siteConfig.origin,
+
+    storage:
+      "冷蔵庫で約1週間を目安にお召し上がりください。乾燥すると果皮の色が変わりやすいため、ジッパー付きの袋などに入れて保存してください。",
+
+    packaging: siteConfig.packagingNote,
+    showVarieties: true,
+
+    lead: "まずは少しだけ試してみたい方に。指宿・山川の生ライチ、350gです。",
+
+    description: [
+      "500gより少なめの、ご家庭でちょうど使いきりやすい量です。生のライチを初めて召し上がる方にも。",
+      "冷凍のライチとは香りも食感も別のもの。皮をむいた瞬間に立ちのぼる香りと、あふれるような果汁が生ライチのいちばんの持ち味です。",
+      "収穫の時期によって品種が変わります。7月は三月紅や在来種、8月は桂味やノーマイチーなど。その時期にいちばん良い状態のものをお届けします。",
+    ],
+
+    features: [
+      "皮をむくと香りが立つ、生ならではの香気",
+      "みずみずしく、果汁の多い果肉",
+      "薩摩半島最南端・指宿山川の風のなかで育った実",
+    ],
+
+    eatingSuggestions: [
+      "冷蔵庫で冷やして、そのまま",
+      "凍らせてシャーベットのように",
+      "スムージーやデザートの材料に",
+    ],
+
+    cautions: [
+      "ひと粒ずつ大きさに差があります。粒数ではなく重量（g）を基準としています。",
+      varietyNote,
+      "種があります。小さなお子様やご高齢の方がお召し上がりの際は、誤って飲み込まないようご注意ください。",
+      "生鮮食品です。お届け後はお早めにお召し上がりください。",
+      siteConfig.giftWrapping.note,
+    ],
+
+    images: [
+      {
+        src: "/images/products/lychee-tray.jpg",
+        alt: "トレイに並べた収穫したての生ライチ",
+        slot: "products/lychee-tray.jpg",
+      },
+      {
+        src: "/images/lychee/lychee-closeup.jpg",
+        alt: "生ライチの果皮のアップ",
+        slot: "lychee/lychee-closeup.jpg",
+      },
+      {
+        src: "/images/lychee/lychee-in-hand.jpg",
+        alt: "手に持ったライチ一粒",
+        slot: "lychee/lychee-in-hand.jpg",
+      },
+    ],
+
+    externalUrl: null,
+
+    condition: "new",
+    gtin: null,
+    relatedSlugs: ["nama-lychee-500g"],
   },
 ];
 

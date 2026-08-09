@@ -34,6 +34,16 @@ JSXに商品や文章を直接書かず、必ずデータ側を更新してく�
 
 ---
 
+## 公開前のチェック
+
+- 本番ドメイン `https://yamakawaengei.com` を Vercel のプロジェクトに接続する
+- 接続後、`https://yamakawaengei.com/sitemap.xml` を
+  Google Search Console に登録する
+- Vercel の環境変数は必須のものはありません
+  （Stripe を接続するときだけ `.env.example` を参照）
+
+---
+
 ## 「確認中」の仕組み
 
 このサイトは、**確認できていないことを画面に出さない** ように作ってあります。
@@ -102,8 +112,9 @@ export const salesStatus = {
 
 ## SEO
 
-- `NEXT_PUBLIC_SITE_URL` が未設定のあいだ、canonical・OGP・sitemap は出力されず、
-  robots.txt は全ページ Disallow になります。プレビューURLの誤インデックス防止です
+- 本番ドメインは `https://yamakawaengei.com`。
+  `src/data/siteConfig.ts` の `PRODUCTION_URL` 1行が canonical・OGP・sitemap・
+  構造化データ・商品フィードのすべての基準になります
 - sitemap.xml は商品とコラムを自動で拾います
 - 構造化データ：`LocalBusiness`＋`Farm` / `WebSite` / `Product`＋`Offer` /
   `BreadcrumbList` / `FAQPage` / `Article` / `ItemList`

@@ -114,12 +114,14 @@ export default function AccessPage() {
               </div>
             </dl>
 
-            <div className="mt-8 border border-ink/12 bg-paper-warm px-5 py-5 text-[0.85rem] leading-[1.95] text-moss">
-              <p>
-                農園での直接のご購入・見学については、時期によって対応が変わります。
-                ご希望の方は、お手数ですが事前にお電話でご確認ください。
+            <div className="mt-8 border border-ink/12 bg-paper-warm px-5 py-5 text-[0.85rem] leading-[1.95] text-ink/80">
+              <p className="font-mincho text-[0.98rem] text-forest">
+                直売・見学について
               </p>
-              <p className="mt-2">駐車場の有無についても{UNCONFIRMED_NOTE}</p>
+              <p className="mt-3">{siteConfig.farmVisit.note}</p>
+              <p className="mt-2 text-moss">
+                駐車場の有無については{UNCONFIRMED_NOTE}
+              </p>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-4">

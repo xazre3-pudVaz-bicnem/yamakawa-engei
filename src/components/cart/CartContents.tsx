@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import QuantityStepper from "./QuantityStepper";
 import Photo from "@/components/ui/Photo";
-import { shippingConfig } from "@/data/siteConfig";
+import { hasShippingAmount, shippingConfig } from "@/data/siteConfig";
 import { formatPrice } from "@/lib/utils";
 
 /**
@@ -46,7 +46,7 @@ export default function CartContents() {
     );
   }
 
-  const shippingKnown = shippingConfig.type !== "unconfirmed";
+  const shippingKnown = hasShippingAmount;
 
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-16">
