@@ -50,6 +50,24 @@ saleStart: null, // [TODO] 今季の販売開始日
 
 ---
 
+## ブログ自動投稿（`/blog`）のルール
+
+Claude API + GitHub Actions で毎日1記事が自動生成される
+（`scripts/generate-daily-post.ts` / `.github/workflows/daily-blog.yml`）。
+
+- モデルは **Haiku 固定**（`claude-haiku-4-5-20251001`）。
+  毎日の記事生成に Sonnet / Opus は使わない。変えるときは環境変数 `ANTHROPIC_MODEL`
+- ブログは**ライチ完全ガイドの支援記事**。ガイドが担当する総合テーマは扱わない。
+  テーマを足す前に `src/data/lycheeGuide.ts` の `intent` 欄を必ず確認する
+- 各テーマに `pillar`（支えるガイドページ）を持たせ、記事から必ずリンクさせる
+- 事実の土台は `FACTS` 配列。**商品データを変えたら `FACTS` も同時に更新する**
+  （価格・配送・品種・お届け時期がサイトとずれると、記事が誤情報になる）
+- 禁止表現は `BANNED` 配列でチェックし、該当したら**保存せずに失敗させる**。
+  誤情報を公開しないことを、生成の成功より優先する
+- 記事の frontmatter は必ず title / slug / description / date / category / tags を持つ
+
+---
+
 ## ライチ完全ガイド（`/lychee`）のルール
 
 このサイトは「ライチ専門メディア＋生産農家のEC」を目指している。

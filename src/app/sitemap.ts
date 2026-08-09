@@ -3,6 +3,7 @@ import { isPublicSite, siteUrl } from "@/data/siteConfig";
 import { visibleProducts } from "@/data/products";
 import { columns } from "@/data/column";
 import { guidePages, guidePath } from "@/data/lycheeGuide";
+import { getBlogCategoriesInUse, getBlogList } from "@/lib/blog";
 
 type Entry = {
   path: string;
@@ -85,10 +86,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
           })),
         ];
 
+  /**
+   * ブログ（毎日1記事が自動生成される）
+   * 記事が1件もないあいだは、一覧もカテゴリーも載せない。
+   * lastModified には frontmatter の実際の更新日を使う。
+   */
+  const blogPosts = getBlogList();
+  const blogEntries: Entry[] =
+    blogPosts.length === 0
+      ? []
+      : [
+          { path: "/blog", priority: 0.7, changeFrequency: "daily" as const },
+          ...getBlogCategoriesInUse().map((category) => ({
+            path: `/blog/category/${category.slug}`,
+            priority: 0.5,
+            changeFrequency: "weekly" as const,
+          })),
+          ...blogPosts.map((post) => ({
+            path: `/blog/${post.slug}`,
+            priority: 0.6,
+            changeFrequency: "monthly" as const,
+            lastModified: new Date(post.updatedAt || post.date),
+          })),
+        ];
+
   return [
     ...staticEntries,
     ...guideEntries,
     ...productEntries,
+    ...blogEntries,
     ...columnEntries,
   ].map((entry) => ({
     url: `${siteUrl}${entry.path === "/" ? "" : entry.path}`,

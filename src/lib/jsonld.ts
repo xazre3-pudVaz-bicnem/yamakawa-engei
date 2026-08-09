@@ -213,6 +213,37 @@ export function guideArticleJsonLd(page: GuidePage) {
   };
 }
 
+/**
+ * ブログ記事（Article）
+ *
+ * 自動生成した記事を、実在しない人物が執筆・監修したように見せない。
+ * author / publisher は農園そのもの（Organization）にする。
+ */
+export function blogArticleJsonLd(post: {
+  slug: string;
+  title: string;
+  description: string;
+  date: string;
+  updatedAt: string;
+}) {
+  const url = absoluteUrl(`/blog/${post.slug}`);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${url}#article`,
+    headline: post.title,
+    description: post.description,
+    inLanguage: "ja",
+    datePublished: post.date,
+    dateModified: post.updatedAt,
+    author: { "@id": ORGANIZATION_ID },
+    publisher: { "@id": ORGANIZATION_ID },
+    mainEntityOfPage: url,
+    about: { "@type": "Thing", name: "ライチ" },
+  };
+}
+
 /** コラム記事（Article） */
 export function articleJsonLd(article: ColumnArticle) {
   return {

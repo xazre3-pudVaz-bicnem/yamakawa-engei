@@ -159,6 +159,92 @@ textarea {
       font-size: 1.625rem;
     }
   }
+
+  /* ----------------------------------------------------------------
+     Markdown本文（ブログ記事）
+
+     .prose-farm と併用する。
+     ガイドの各ページは箇条書きを自前の組み（flex + 罫線）で書いているため、
+     リストや表の体裁はこちらのクラス側だけに持たせて衝突を避けている。
+  ---------------------------------------------------------------- */
+  .md-body ul,
+  .md-body ol {
+    padding-left: 1.4em;
+  }
+
+  .md-body ul {
+    list-style-type: disc;
+  }
+
+  .md-body ol {
+    list-style-type: decimal;
+  }
+
+  .md-body li {
+    line-height: 2;
+    margin-top: 0.5rem;
+  }
+
+  .md-body li::marker {
+    color: var(--color-leaf);
+  }
+
+  .md-body li > ul,
+  .md-body li > ol {
+    margin-top: 0.5rem;
+  }
+
+  .md-body strong {
+    font-weight: 500;
+    color: var(--color-forest);
+  }
+
+  .md-body blockquote {
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    border-left: 2px solid color-mix(in srgb, var(--color-leaf) 55%, transparent);
+    color: var(--color-moss);
+  }
+
+  .md-body hr {
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+    margin-block: 2.5rem;
+  }
+
+  /* 表は横に長くなりがちなので、表だけを横スクロールさせる
+     （ページ全体が横に伸びないようにするため） */
+  .md-body .table-scroll {
+    overflow-x: auto;
+  }
+
+  .md-body table {
+    width: 100%;
+    min-width: 22rem;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  .md-body thead tr {
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent);
+  }
+
+  .md-body th {
+    padding: 0.85rem 1.25rem 0.85rem 0;
+    font-weight: 400;
+    color: var(--color-moss);
+  }
+
+  .md-body tbody tr {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+  }
+
+  .md-body td {
+    padding: 0.85rem 1.25rem 0.85rem 0;
+    line-height: 1.9;
+    vertical-align: top;
+  }
 }
 
 /* ================================================================

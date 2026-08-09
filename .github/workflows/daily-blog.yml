@@ -1,0 +1,55 @@
+name: Daily Blog Post
+
+# 毎日 12:00 JST に自動実行します。
+# GitHub Actions の cron は UTC 基準のため、12:00 JST = 03:00 UTC。
+# 手動でも実行できます（Actions タブ → Daily Blog Post → Run workflow）。
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate daily blog post
+        env:
+          # 必要なシークレットはこれだけです。
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 任意。未設定なら Haiku（claude-haiku-4-5-20251001）を使います。
+          # モデルを変えたい場合はリポジトリ変数 ANTHROPIC_MODEL を設定してください。
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+        run: npx tsx scripts/generate-daily-post.ts
+
+      - name: Commit & push
+        run: |
+          git config user.name "yamakawaengei-blog-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add content/blog
+
+          if git diff --cached --quiet; then
+            echo "変更なし（新しい記事は生成されませんでした）。正常終了します。"
+            exit 0
+          fi
+
+          echo "新規記事ファイル:"
+          git diff --cached --name-only --diff-filter=A -- content/blog
+
+          git commit -m "chore(blog): 自動生成した記事を追加 ($(date -u -d '+9 hours' +'%Y-%m-%d'))"
+          git push origin HEAD:main
+          echo "push 完了: main ブランチへ反映しました。Vercel が自動でデプロイします。"

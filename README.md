@@ -19,6 +19,7 @@ npm run typecheck  # 型チェック
 
 | やりたいこと | 開くファイル |
 | --- | --- |
+| ブログ記事のテーマを追加・修正する | `scripts/generate-daily-post.ts` の `TOPICS` |
 | ライチ解説ページを追加・修正する | `src/data/lycheeGuide.ts` ＋ `src/app/lychee/<slug>/page.tsx` |
 | 栄養の数値を更新する | `src/data/nutrition.ts`（出典の確認が必須） |
 | 販売状況を変える（販売中／予約受付中／近日開始／販売終了） | `src/data/siteConfig.ts` の `salesStatus.phase` |
@@ -123,6 +124,67 @@ export const salesStatus = {
 - 実在しないレビュー・評価は出力しません
 - Googleショッピング用フィード：`/feed/products.xml`
   （価格と写真が揃った商品だけが載ります）
+
+---
+
+## ブログの自動投稿（`/blog`）
+
+Claude API と GitHub Actions で、**毎日12:00（日本時間）に1記事**が自動生成され、
+`content/blog/` に追加されて main へ直接コミットされます。
+Vercel の GitHub 連携でそのまま公開されます。
+
+| 項目 | 内容 |
+| --- | --- |
+| 実行時刻 | 毎日 12:00 JST（`cron: "0 3 * * *"`／UTC 03:00） |
+| モデル | `claude-haiku-4-5-20251001`（コスト優先） |
+| 保存先 | `content/blog/*.md` |
+| 必要な設定 | GitHub Secrets に `ANTHROPIC_API_KEY` のみ |
+
+### 準備（一度だけ）
+
+1. GitHubリポジトリの Settings → Secrets and variables → Actions
+2. **New repository secret** で `ANTHROPIC_API_KEY` を登録
+
+これだけで動きます。手動で試すときは Actions タブ →
+Daily Blog Post → Run workflow。
+
+### モデルを変えたいとき
+
+同じ画面の **Variables** タブで `ANTHROPIC_MODEL` を設定すると、そちらが優先されます。
+未設定なら Haiku を使います。毎日の記事生成に Sonnet や Opus は使いません。
+実行ログの先頭に、実際に使ったモデル名が出ます。
+
+### 記事のテーマ
+
+`scripts/generate-daily-post.ts` の `TOPICS` に約45件あります。
+未使用のテーマから順に選ばれ、`topicId` で重複を避けます。
+すべて書き終えると、最も古いテーマを別の切り口で書き直します。
+
+**テーマを足すときは、必ず `src/data/lycheeGuide.ts` の `intent` 欄を確認してください。**
+ブログはライチ完全ガイドの**支援記事**という位置づけで、
+ガイドが担当する総合テーマ（栄養・食べ方・旬・保存など）は扱いません。
+同じ検索意図の記事を作ると、ガイドとブログが共倒れになります。
+
+各テーマには `pillar`（支えるガイドページ）を持たせてあり、
+記事から必ずそのページへリンクが張られます。
+
+### 安全装置
+
+生成された記事に次の表現が含まれていた場合、**保存せずに失敗**します。
+
+- 「日本一」「No.1」「最安」「最高級」などの根拠のない表現
+- 「必ず買える」など在庫を断定する表現
+- 医療効果の断定（「病気が治る」「免疫力が上がる」「美容効果」など）
+- のし・熨斗（対応していないサービス）
+
+事実の土台は `scripts/generate-daily-post.ts` の `FACTS` にまとめてあり、
+価格・配送・品種・お届け時期をサイトの表記と揃えています。
+**商品情報を変更したときは、`FACTS` も同時に更新してください。**
+
+### 記事を手で直したいとき
+
+`content/blog/` の `.md` を編集してコミットするだけです。
+書き方は `content/README.md` に説明があります。
 
 ---
 

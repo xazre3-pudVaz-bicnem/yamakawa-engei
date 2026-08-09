@@ -488,6 +488,7 @@ export const footerNavigation = [
       { href: "/lychee/storage", label: "ライチの保存方法" },
       { href: "/lychee/fresh", label: "生ライチとは" },
       { href: "/lychee/domestic", label: "国産ライチ" },
+      { href: "/blog", label: "ブログ" },
     ],
   },
   {
