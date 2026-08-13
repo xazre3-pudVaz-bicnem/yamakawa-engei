@@ -185,19 +185,6 @@ export const siteConfig = {
   },
 
   /**
-   * 公式オンラインショップ（BASE）[公式]
-   *
-   * 現在、実際にご注文を受け付けている販売チャネル。
-   * 本サイトのカートは checkout.provider = "external" のとき
-   * 最終的にここへ引き継ぐ。Stripe接続後は provider を切り替える。
-   */
-  externalShop: {
-    name: "山川園芸 公式オンラインショップ",
-    platform: "BASE",
-    url: "https://yamaen.base.shop",
-  },
-
-  /**
    * 店頭での取り扱い [公式・Instagramプロフィール]
    * 取扱状況は時期により変わるため、表示は「〜にて取り扱いいただいています」に留める。
    */
@@ -318,106 +305,50 @@ export const isPurchasable =
 /* ================================================================
    配送・送料
    ---------------------------------------------------------------
-   [TODO] 送料は未確定。fee を null にしているあいだ、
-   カート・商品ページには金額を表示せず「別途」と案内する。
+   実体は src/data/shipping.ts にあります。
+   ここでは、既存の import を壊さないために再輸出しているだけです。
+   送料を設定するときは src/data/shipping.ts を開いてください。
 ================================================================ */
 
-export const shippingConfig = {
-  /**
-   * 送料の扱い。
-   *   "external"    … 金額は公式オンラインショップの「送料・配送方法について」に掲載
-   *   "flat"        … 全国一律（flatFee に金額を入れる）
-   *   "by_region"   … 地域別（regions に金額を入れる）
-   *   "free"        … 送料無料
-   *   "unconfirmed" … 未確定（画面には金額を出さない）
-   *
-   * 現在は "external"。本サイトに金額表を載せる場合は、
-   * 公式オンラインショップの表記と必ず一致させること（食い違うと事故になる）。
-   */
-  type: "external" as
-    | "external"
-    | "unconfirmed"
-    | "flat"
-    | "by_region"
-    | "free",
-  /** 全国一律送料（税込）。未設定なら null */
-  flatFee: null as number | null,
-  /** 地域別送料。未設定なら空配列 */
-  regions: [] as Array<{ name: string; fee: number }>,
-  /** 送料無料になる購入金額。未設定なら null */
-  freeShippingThreshold: null as number | null,
-
-  /**
-   * 配送方法 [確認済]
-   * 温度帯もこの一文に含めているため、別項目は設けない。
-   */
-  carrier: "ヤマト運輸のクール便",
-
-  /** 発送までの目安 [公式・BASEショップの商品ページ表記] */
-  dispatchLead: "ご注文から2〜3営業日以内に発送",
-
-  /**
-   * 発送日指定の可否。
-   * 可否そのものは未確定のため、ご相談いただく案内にとどめている。
-   */
-  canSpecifyDeliveryDate: null as boolean | null,
-
-  /** 配送可能地域 [確認済] */
-  deliverableArea: "離島を除く全国",
-
-  /**
-   * 送料の詳細の掲載先 [確認済]
-   * 公式オンラインショップ（BASE）の各商品ページにある
-   * 「送料・配送方法について」に金額が掲載されている。
-   * 本サイトに金額表を載せる場合は type を "flat" などに変更すること。
-   */
-  guideUrl: "https://yamaen.base.shop/items/all",
-
-  /** 共通注記 */
-  note: "収穫の状況や天候により、発送が前後する場合があります。",
-};
-
-/**
- * 本サイトの画面上で送料の金額を出せるか。
- * false のあいだ、カート・購入手続きの合計に送料を足さず「別途」と表示する。
- */
-export const hasShippingAmount =
-  shippingConfig.type === "free" ||
-  (shippingConfig.type === "flat" && shippingConfig.flatFee !== null) ||
-  (shippingConfig.type === "by_region" && shippingConfig.regions.length > 0);
+export { SHIPPING as shippingConfig, isShippingConfigured as hasShippingAmount } from "./shipping";
 
 /* ================================================================
-   決済
+   決済（Stripe）
    ---------------------------------------------------------------
-   provider を切り替えるだけで /checkout の挙動が変わる。
-     "external" … カート内容を確認後、公式オンラインショップ（BASE）へ引き継ぐ
-     "stripe"   … Stripe Checkout へ（要 STRIPE_SECRET_KEY。/api/checkout を実装）
-     "inquiry"  … ご注文フォーム（メール）で受け付ける
+   本サイト内で完結する Stripe Embedded Checkout を使用。
+   お客様はサイトから出ることなく、住所とカード情報を入力して決済できる。
+
+   実装:
+     /checkout                  … 決済フォーム（Embedded Checkout）
+     /api/checkout              … Checkout Session の作成（金額はサーバーで確定）
+     /api/stripe/webhook        … 注文確定の正式な受け口
+     /order/complete            … 注文完了ページ
+
    APIキーは必ず環境変数から読むこと。コードに直接書かない。
+     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY … 公開鍵（ブラウザで使う）
+     STRIPE_SECRET_KEY                  … 秘密鍵（サーバーのみ）
+     STRIPE_WEBHOOK_SECRET              … Webhookの署名検証
 ================================================================ */
 
 export const checkoutConfig = {
-  /** ★ここを書き換える★ */
-  provider: "external" as "external" | "stripe" | "inquiry",
-
   /**
-   * 支払方法。現在は公式オンラインショップ（BASE）での取り扱い内容 [公式]。
-   * 自社決済（Stripe）に切り替える際は、実際に有効化した手段だけを残すこと。
+   * 支払方法。
+   * ★ Stripeダッシュボードで実際に有効化しているものだけを書くこと ★
+   * 有効化していない手段を書くと、特定商取引法の表記が事実と食い違う。
+   *
+   * コンビニ決済・銀行振込などを追加したときは、
+   * ここに足したうえで、api/checkout の payment_method_types も見直すこと。
    */
-  paymentMethods: [
-    "クレジットカード",
-    "PAY ID あと払い（コンビニ・銀行）",
-    "銀行振込",
-  ],
+  paymentMethods: ["クレジットカード（VISA／Mastercard／JCB／American Express など）"],
 
-  /** 支払時期 [公式] */
-  paymentTiming:
-    "クレジットカードは注文時、銀行振込・あと払いは各サービスの定める期日までにお支払いください。",
+  /** 支払時期 */
+  paymentTiming: "ご注文時にお支払いが完了します。",
 
-  /** 引渡し時期 [公式] */
-  deliveryTiming: "ご入金の確認後、5日以内に発送いたします。",
+  /** 引渡し時期 */
+  deliveryTiming:
+    "ご注文から2〜3営業日以内に発送いたします（収穫の状況により前後する場合があります）。",
 
-  /** 返品・キャンセル [公式] */
+  /** 返品・キャンセル */
   returnPolicy:
     "商品に欠陥がある場合を除き、原則として返品・交換はお受けしておりません。",
 
@@ -446,8 +377,12 @@ export const contactConfig = {
    */
   formEndpoint: null as string | null,
 
-  /** 公式オンラインショップ（BASE）の問い合わせフォーム [公式] */
-  shopContactUrl: "https://thebase.com/inquiry/yamaen-base-shop",
+  /**
+   * [TODO] 自社の問い合わせフォームは未設置。
+   * 設置したらここにパス（例: "/contact/form"）を入れる。
+   * 現在は電話・メール・Instagramを案内している。
+   */
+  formUrl: null as string | null,
 };
 
 /* ================================================================

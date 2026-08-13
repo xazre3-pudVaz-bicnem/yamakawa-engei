@@ -74,7 +74,7 @@ export function organizationJsonLd() {
     founder: { "@type": "Person", name: siteConfig.owner },
     employee: { "@type": "Person", name: siteConfig.owner },
     knowsAbout: ["ライチ", "生ライチ", "熱帯果樹", "国産ライチ"],
-    sameAs: [siteConfig.instagram.url, siteConfig.externalShop.url],
+    sameAs: [siteConfig.instagram.url],
     ...(siteConfig.phone ? { telephone: siteConfig.phone } : {}),
     ...(siteConfig.hours.length
       ? {

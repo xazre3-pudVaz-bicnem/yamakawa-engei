@@ -1,7 +1,7 @@
 # 山川園芸 公式ECサイト — プロジェクト規約
 
 鹿児島県指宿市山川のライチ農園「山川園芸」のECサイト。
-ルートの `c:\projects\CLAUDE.md`（Elite Web Agency Master System）に加えて、
+ルートの `c:\projects\AGENTS.md`（Elite Web Agency Master System）に加えて、
 このプロジェクトでは以下を守る。
 
 ---
@@ -52,10 +52,10 @@ saleStart: null, // [TODO] 今季の販売開始日
 
 ## ブログ自動投稿（`/blog`）のルール
 
-Claude API + GitHub Actions で毎日1記事が自動生成される
+Codex API + GitHub Actions で毎日1記事が自動生成される
 （`scripts/generate-daily-post.ts` / `.github/workflows/daily-blog.yml`）。
 
-- モデルは **Haiku 固定**（`claude-haiku-4-5-20251001`）。
+- モデルは **Haiku 固定**（`Codex-haiku-4-5-20251001`）。
   毎日の記事生成に Sonnet / Opus は使わない。変えるときは環境変数 `ANTHROPIC_MODEL`
 - ブログは**ライチ完全ガイドの支援記事**。ガイドが担当する総合テーマは扱わない。
   テーマを足す前に `src/data/lycheeGuide.ts` の `intent` 欄を必ず確認する
@@ -163,15 +163,8 @@ Claude API + GitHub Actions で毎日1記事が自動生成される
   （JSが動かない環境で本文が消えないため）
 - `Photo` コンポーネントに `absolute` を渡さない。`position: relative` の枠を作るため、
   背景として敷き詰める用途には `next/image` を直接使う
-- **決済の金額は必ずサーバー側で `products.ts` から引き直す。**
-  クライアントから受け取ってよいのは商品のslugと数量だけ（`src/lib/order.ts` が関門）
-- Stripeのシークレットキーは `src/lib/stripe.ts` 経由でサーバー側からのみ触る。
-  `"use client"` のファイルから import しない
-- **送料が未設定のあいだは決済させない**（`src/data/shipping.ts` の `mode`）。
-  架空の送料や暗黙の送料無料で注文を受けない
-- 注文確定の正式な判定はWebhook。注文完了ページの表示を信用しない。
-  署名検証と二重処理の防止を外さない
-- 特商法の支払方法は、Stripeで実際に有効化している手段だけを書く
+- 決済の金額は必ずサーバー側で `products.ts` から引き直す。
+  クライアントから送られた価格を信用しない
 - APIキーをコードに書かない。必ず環境変数から読む
 - 本番ドメインは `src/data/siteConfig.ts` の `PRODUCTION_URL` に一元化されている。
   canonical・OGP・sitemap・構造化データ・商品フィードがすべてこの値を使うので、

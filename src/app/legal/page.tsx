@@ -1,12 +1,8 @@
 import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
-import {
-  checkoutConfig,
-  contactConfig,
-  shippingConfig,
-  siteConfig,
-} from "@/data/siteConfig";
+import { checkoutConfig, contactConfig, siteConfig, siteUrl } from "@/data/siteConfig";
+import { SHIPPING as shippingConfig, isShippingConfigured } from "@/data/shipping";
 import { buildMetadata } from "@/lib/metadata";
 
 /**
@@ -17,17 +13,15 @@ import { buildMetadata } from "@/lib/metadata";
  * ─────────────────────────────────────────────
  * ECサイトの必須ページです。value が null の項目は
  * 「確認中」と表示され、内容が未確定であることが読み手にも分かります。
- * 推測で埋めないこと。data/siteConfig.ts に値を入れると自動で反映されます。
+ * 推測で埋めないこと。設定に値を入れると自動で反映されます。
  *
- * お支払い方法・引渡し時期・返品についての記載は、現在
- * 公式オンラインショップ（BASE）で公開されている内容にもとづいています。
- * 本サイトで自社決済（Stripe等）を始めるときは、必ず内容を見直してください。
+ * ★ お支払い方法は、Stripeダッシュボードで実際に有効化している手段だけを
+ *   書くこと（data/siteConfig.ts の checkoutConfig.paymentMethods）。
+ *   有効化していない手段を書くと、表記が事実と食い違います。
  *
- * 未確定のまま残っている項目（開業前に必ず確定させること）
- *   ・メールアドレス（連絡先として公開できるもの）
- *   ・送料
+ * 未確定のまま残っている項目（本番決済を始める前に必ず確定させること）
+ *   ・送料（src/data/shipping.ts）
  *   ・生鮮品の品質に関する対応（傷み・輸送事故時の連絡期限と対応）
- *   ・商品代金以外の必要料金（振込手数料・代引手数料など）
  */
 
 export const metadata = buildMetadata({
@@ -62,20 +56,26 @@ export default function LegalPage() {
     {
       term: "メールアドレス",
       value: contactConfig.email,
-      note: "お問い合わせは、お電話または公式オンラインショップのお問い合わせフォームより承ります。",
+      note: "お問い合わせは、お電話またはメールにて承ります。",
     },
     {
-      term: "ホームページ",
-      value: siteConfig.externalShop.url,
+      term: "販売サイトURL",
+      value: siteUrl,
     },
     {
       term: "販売価格",
       value:
         "各商品ページに表示された価格（税込）によります。商品代金のほかに送料がかかります。",
     },
-    // 「商品代金以外の必要料金」の行はオーナーのご指示により削除。
-    // 送料の金額は公式オンラインショップに掲載しているため、
-    // 本サイトに二重で載せて食い違うことを避けている。
+    {
+      term: "商品代金以外の必要料金",
+      value: isShippingConfigured
+        ? "送料（配送・送料についてのページに記載しています）。それ以外にお客様にご負担いただく費用はありません。"
+        : null,
+      note: isShippingConfigured
+        ? undefined
+        : "送料は確認中です。確定しだい掲載します。",
+    },
     {
       term: "お支払い方法",
       value: checkoutConfig.paymentMethods.join("／"),

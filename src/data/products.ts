@@ -126,13 +126,6 @@ export type Product = {
 
   images: ProductImage[];
 
-  /**
-   * 公式オンラインショップ（BASE）の該当商品ページ。
-   * checkoutConfig.provider が "external" のとき、この商品の
-   * ご購入手続きの引き継ぎ先として使う。null ならショップTOPへ。
-   */
-  externalUrl: string | null;
-
   /** Googleショッピング用: 商品の状態 */
   condition: "new";
   /** Googleショッピング用: JANコード等。未取得なら null */
@@ -294,8 +287,6 @@ export const products: Product[] = [
       // ここに { src, alt, slot } を1件追加してください。
     ],
 
-    externalUrl: null, // [TODO] BASEの該当商品ページURLが分かれば入れる（未設定ならショップTOPへ）
-
     condition: "new",
     gtin: null,
     relatedSlugs: ["nama-lychee-350g"],
@@ -384,8 +375,6 @@ export const products: Product[] = [
         slot: "lychee/lychee-in-hand.jpg",
       },
     ],
-
-    externalUrl: null,
 
     condition: "new",
     gtin: null,

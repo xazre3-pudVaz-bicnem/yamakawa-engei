@@ -1,12 +1,8 @@
 import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
-import {
-  checkoutConfig,
-  shippingConfig,
-  siteConfig,
-  UNCONFIRMED_NOTE,
-} from "@/data/siteConfig";
+import { checkoutConfig, siteConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
+import { SHIPPING as shippingConfig, isShippingConfigured } from "@/data/shipping";
 import { buildMetadata } from "@/lib/metadata";
 
 /**
@@ -135,7 +131,18 @@ export default function GuidePage() {
             <div className="flex flex-col gap-2 py-6 sm:flex-row sm:gap-8">
               <dt className="w-32 shrink-0 text-moss">送料</dt>
               <dd className="leading-[1.95]">
-                {shippingConfig.type === "unconfirmed" ? (
+                {isShippingConfigured ? (
+                  <>
+                    {shippingConfig.carrier}でお届けします。送料は
+                    <Link
+                      href="/shipping"
+                      className="mx-1 text-lychee-deep underline underline-offset-4"
+                    >
+                      配送・送料について
+                    </Link>
+                    をご覧ください。ご購入手続きの画面でも合計金額をご確認いただけます。
+                  </>
+                ) : (
                   <>
                     現在確認中です。{UNCONFIRMED_NOTE}
                     <Link
@@ -144,17 +151,6 @@ export default function GuidePage() {
                     >
                       配送・送料について
                     </Link>
-                  </>
-                ) : (
-                  <>
-                    {shippingConfig.carrier}でお届けします。送料の金額は
-                    <Link
-                      href="/shipping"
-                      className="mx-1 text-lychee-deep underline underline-offset-4"
-                    >
-                      配送・送料について
-                    </Link>
-                    をご覧ください。
                   </>
                 )}
               </dd>
@@ -184,31 +180,20 @@ export default function GuidePage() {
           </dl>
         </Reveal>
 
-        {/* ---- 現在の受付方法 ---- */}
-        {checkoutConfig.provider === "external" && (
-          <Reveal className="mt-14 border border-ink/12 bg-paper-warm px-6 py-7 md:px-8">
-            <h2 className="font-mincho text-[1.1rem] text-forest">
-              ご注文の受付について
-            </h2>
-            <p className="mt-4 text-[0.9rem] leading-[1.95] text-ink/80">
-              お支払いとご注文の受付は、山川園芸の公式オンラインショップ（
-              {siteConfig.externalShop.platform}）で行っています。
-              本サイトのカートでご希望の内容をまとめたあと、
-              ご購入手続きの画面から公式ショップへお進みください。
-            </p>
-            <p className="mt-5">
-              <a
-                href={siteConfig.externalShop.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[0.9rem] text-lychee-deep underline underline-offset-8 hover:text-lychee"
-              >
-                公式オンラインショップを開く
-                <span className="sr-only">（新しいタブで開きます）</span>
-              </a>
-            </p>
-          </Reveal>
-        )}
+        {/* ---- 決済について ---- */}
+        <Reveal className="mt-14 border border-ink/12 bg-paper-warm px-6 py-7 md:px-8">
+          <h2 className="font-mincho text-[1.1rem] text-forest">
+            お支払いの安全性について
+          </h2>
+          <p className="mt-4 text-[0.9rem] leading-[1.95] text-ink/80">
+            お支払いは、山川園芸のサイト内でそのままお手続きいただけます。
+            カード情報は決済代行会社（Stripe）が直接お預かりし、
+            山川園芸のサーバーには保存されません。
+          </p>
+          <p className="mt-3 text-[0.9rem] leading-[1.95] text-ink/80">
+            通信はすべて暗号化されています。
+          </p>
+        </Reveal>
 
         <Reveal className="mt-14 flex flex-wrap gap-4">
           <Link

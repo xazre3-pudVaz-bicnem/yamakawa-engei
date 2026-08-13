@@ -1,7 +1,8 @@
 import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
-import { checkoutConfig, shippingConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
+import { checkoutConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
+import { SHIPPING as shippingConfig, isShippingConfigured } from "@/data/shipping";
 import { buildMetadata } from "@/lib/metadata";
 import { formatPrice } from "@/lib/utils";
 
@@ -11,38 +12,31 @@ import { formatPrice } from "@/lib/utils";
  * ─────────────────────────────────────────────
  * 送料の表示
  * ─────────────────────────────────────────────
- * data/siteConfig.ts の shippingConfig を書き換えるだけで、
- * このページ・カート・購入手続き・お買い物ガイドの表示がすべて揃う。
+ * 表示はすべて src/data/shipping.ts から作っている。
+ * そちらを設定すれば、このページ・カート・決済画面・お買い物ガイド・
+ * 特定商取引法の表記、そしてStripeに渡す送料までが一度に揃う。
  *
- *   現在（"external"）:
- *     金額は公式オンラインショップに掲載。ここでは掲載先を案内するだけ。
- *     二重に載せて食い違うことを避けるための設定。
- *   全国一律にするとき:
- *     type: "flat", flatFee: 1000
- *   地域別にするとき:
- *     type: "by_region", regions: [{ name: "九州", fee: 900 }, ...]
- *   送料無料のとき:
- *     type: "free"
- *   未確定に戻すとき:
- *     type: "unconfirmed"（金額を出さず「確認中」と表示する）
+ *   全国一律にするとき: mode: "flat", flatFee: 1200
+ *   地域別にするとき  : mode: "by_region"（各 regions の fee を埋める）
+ *   送料無料のとき    : mode: "free"
  *
- * 架空の送料は載せない。
+ * 送料が未設定のあいだは金額を出さず、Stripeの決済画面も開かない。
+ * 架空の送料は絶対に載せない。
  */
 
 export const metadata = buildMetadata({
   title: "配送・送料について",
   description:
-    "山川園芸オンラインショップの配送についてのご案内です。発送の時期、お届けまでの日数、送料についてご説明します。",
+    "山川園芸オンラインショップの配送についてのご案内です。ヤマト運輸のクール便で、離島を除く全国へお届けします。発送の時期と送料についてご説明します。",
   path: "/shipping",
 });
 
 export default function ShippingPage() {
-  const isFlat = shippingConfig.type === "flat";
-  const isByRegion = shippingConfig.type === "by_region";
-  const isFree = shippingConfig.type === "free";
-  const isUnconfirmed = shippingConfig.type === "unconfirmed";
-  /** 金額は公式オンラインショップに掲載し、こちらからは案内だけを出す */
-  const isExternal = shippingConfig.type === "external";
+  const isFlat = shippingConfig.mode === "flat" && shippingConfig.flatFee !== null;
+  const isByRegion = shippingConfig.mode === "by_region";
+  const isFree = shippingConfig.mode === "free";
+  /** 金額をまだ出せない状態 */
+  const isUnconfirmed = !isShippingConfigured;
 
   return (
     <>
@@ -117,25 +111,6 @@ export default function ShippingPage() {
           />
 
           <div className="mt-10">
-            {isExternal && (
-              <div className="border border-ink/12 bg-paper-warm px-6 py-7">
-                <p className="text-[0.92rem] leading-[2] text-ink/80">
-                  送料は、公式オンラインショップの各商品ページにある
-                  「送料・配送方法について」に掲載しています。
-                  ご注文手続きの画面でもご確認いただけます。
-                </p>
-                <a
-                  href={shippingConfig.guideUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 inline-flex items-center justify-center border border-forest bg-forest px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-paper transition-colors duration-300 hover:bg-forest-deep"
-                >
-                  公式オンラインショップで送料を見る
-                  <span className="sr-only">（新しいタブで開きます）</span>
-                </a>
-              </div>
-            )}
-
             {isUnconfirmed && (
               <div className="border border-ink/12 bg-paper-warm px-6 py-7">
                 <p className="text-[0.92rem] leading-[2] text-ink/80">
@@ -169,32 +144,43 @@ export default function ShippingPage() {
               </p>
             )}
 
-            {isByRegion && shippingConfig.regions.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[24rem] border-collapse text-left text-[0.9rem]">
-                  <caption className="sr-only">地域別の送料</caption>
-                  <thead>
-                    <tr className="border-y border-ink/15">
-                      <th scope="col" className="py-4 pr-6 font-normal text-moss">
-                        お届け地域
-                      </th>
-                      <th scope="col" className="py-4 font-normal text-moss">
-                        送料（税込）
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink/12">
-                    {shippingConfig.regions.map((region) => (
-                      <tr key={region.name}>
-                        <th scope="row" className="py-4 pr-6 font-normal">
-                          {region.name}
+            {isByRegion && !isUnconfirmed && (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[24rem] border-collapse text-left text-[0.9rem]">
+                    <caption className="sr-only">地域別の送料</caption>
+                    <thead>
+                      <tr className="border-y border-ink/15">
+                        <th scope="col" className="py-4 pr-6 font-normal text-moss">
+                          お届け地域
                         </th>
-                        <td className="tnum py-4">{formatPrice(region.fee)}</td>
+                        <th scope="col" className="py-4 font-normal text-moss">
+                          送料（税込）
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-ink/12">
+                      {shippingConfig.regions.map((region) => (
+                        <tr key={region.id}>
+                          <th scope="row" className="py-4 pr-6 font-normal">
+                            {region.name}
+                            <span className="mt-1 block text-[0.78rem] font-normal text-moss">
+                              {region.prefectures.join("・")}
+                            </span>
+                          </th>
+                          <td className="tnum py-4 align-top">
+                            {formatPrice(region.fee)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-5 text-[0.83rem] leading-[1.9] text-moss">
+                  ご購入手続きの画面で、お届け先の地域をお選びください。
+                  合計金額はその場でご確認いただけます。
+                </p>
+              </>
             )}
 
             {shippingConfig.freeShippingThreshold !== null && (

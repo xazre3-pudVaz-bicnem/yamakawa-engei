@@ -47,6 +47,59 @@
 
 ---
 
+## ★★ 決済を始める前に必ず必要（これがないと売れません）
+
+Stripeのオンライン決済をサイト内に実装しました。
+ただし**送料が未設定のため、決済画面が開かないようにしてあります。**
+送料が決まっていない状態で注文を受けると、送料分がまるごと赤字になるためです。
+
+### 1. 送料を設定する（最優先）
+
+`src/data/shipping.ts` を開いて、次のどちらかに書き換えてください。
+
+```ts
+// 全国一律にする場合
+mode: "flat",
+flatFee: 1200,        // 税込の金額
+
+// 地域別にする場合
+mode: "by_region",
+// regions の各 fee に税込金額を入れる（null のままにしない）
+```
+
+これだけで、カート・決済画面・配送ページ・特商法の表記と、
+Stripeに渡す送料がすべて一致します。
+
+**おすすめは全国一律です。** Stripeの決済画面は住所から送料を自動で選ぶ仕組みを
+持っていないため、地域別にするとお客様自身が地域を選ぶ形になり、
+実際のお届け先とずれる可能性があります
+（ずれた場合はWebhookのログに警告を出すようにしてあります）。
+
+### 2. StripeダッシュボードでWebhookを登録する
+
+| 項目 | 値 |
+| --- | --- |
+| エンドポイントURL | `https://www.yamakawaengei.com/api/stripe/webhook` |
+| 購読するイベント | `checkout.session.completed`<br>`checkout.session.async_payment_succeeded`<br>`checkout.session.async_payment_failed` |
+
+登録すると `whsec_` で始まる署名シークレットが発行されます。
+それを Vercel の環境変数 **`STRIPE_WEBHOOK_SECRET`** に登録してください。
+
+### 3. 生鮮品の品質に関する対応を決める
+
+特定商取引法のページで唯一「確認中」のままの項目です。
+「お届け後◯日以内にご連絡ください」といった連絡期限と対応が決まれば、
+`src/data/siteConfig.ts` の `checkoutConfig.freshnessPolicy` に入れてください。
+
+### 4. Stripeで有効化した支払方法を確認する
+
+現在は「クレジットカード」のみと表記しています。
+コンビニ決済などを有効化した場合は、
+`src/data/siteConfig.ts` の `checkoutConfig.paymentMethods` に追加してください。
+**有効化していない手段を書くと、特定商取引法の表記が事実と食い違います。**
+
+---
+
 ## ★ 残っている確認事項
 
 | # | 内容 | 書き換える場所 |

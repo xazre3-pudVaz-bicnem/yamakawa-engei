@@ -52,14 +52,12 @@ export default function Footer() {
               >
                 Instagram {siteConfig.instagram.handle}
               </a>
-              <a
-                href={siteConfig.externalShop.url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/shop"
                 className="underline underline-offset-4 hover:text-lychee-soft"
               >
-                公式オンラインショップ
-              </a>
+                オンラインショップ
+              </Link>
             </div>
           </div>
 

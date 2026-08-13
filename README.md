@@ -87,6 +87,51 @@ export const salesStatus = {
 
 ---
 
+## 決済（Stripe Embedded Checkout）
+
+お客様は**山川園芸のサイトから出ることなく**、住所とカード情報を入力して
+決済まで完了できます。外部のショップへは遷移しません。
+
+```text
+商品ページ → カート → /checkout（住所＋カード入力）→ /order/complete
+```
+
+| ファイル | 役割 |
+| --- | --- |
+| `src/data/shipping.ts` | **送料の設定（ここを設定しないと決済できません）** |
+| `src/lib/stripe.ts` | Stripeクライアント（サーバー専用） |
+| `src/lib/order.ts` | 注文内容の検証（価格はここでサーバー側から引き直す） |
+| `src/app/api/checkout/route.ts` | Checkout Session の作成 |
+| `src/app/api/stripe/webhook/route.ts` | 注文確定の正式な受け口 |
+| `src/components/cart/StripeCheckout.tsx` | 決済フォームの描画 |
+| `src/app/order/complete/page.tsx` | 注文完了ページ |
+
+### 価格の改ざんができない仕組み
+
+ブラウザから受け取るのは**商品のslugと数量だけ**です。
+価格・商品名・合計金額はすべて `src/data/products.ts` から引き直します
+（`src/lib/order.ts`）。開発者ツールで価格を書き換えても、
+決済される金額は変わりません。
+
+### 送料が未設定のあいだ
+
+`src/data/shipping.ts` の `mode` が `"unconfirmed"` のあいだ、
+決済画面は開かず「お電話でご注文ください」と案内します。
+送料が決まっていない状態で注文を受けると赤字になるためです。
+
+### 注文確定の判定
+
+注文完了ページの表示ではなく、**Webhookを正式な判定**にしています。
+お客様がブラウザを閉じても、支払いが済んでいれば通知が届きます。
+署名検証と二重処理の防止を実装済みです。
+
+注文の保存やメール通知を追加するときは、
+`src/app/api/stripe/webhook/route.ts` の `handlePaidSession` に書いてください。
+そのとき、二重処理の判定を `src/lib/webhook-events.ts`（メモリ上）から
+保存先での判定に置き換えてください。
+
+---
+
 ## カートと購入手続き
 
 - カートの中身はブラウザの localStorage に保存され、ページを移動しても残ります
@@ -242,18 +287,28 @@ AIの記憶や一般ブログの数値を書かないでください。健康情
 
 ## ディレクトリ
 
-```
+```text
 src/
-  app/            ページ（App Router）
-    api/checkout/ 決済APIの受け口（Stripe接続用）
-    feed/         Googleショッピング用フィード
+  app/                      ページ（App Router）
+    api/checkout/           Stripe Checkout Session の作成
+    api/stripe/webhook/     注文確定の受け口
+    checkout/               決済フォーム（Embedded Checkout）
+    order/complete/         注文完了
+    blog/                   ブログ（毎日自動生成）
+    lychee/                 ライチ完全ガイド14ページ
+    feed/                   Googleショッピング用フィード
   components/
-    cart/         カート一式
-    layout/       Header / Footer / スマホ下部の購入バー
-    product/      商品の見せ方
-    sections/home/ TOPページの各セクション
-    ui/           共通パーツ
-  data/           ★ここを更新する（siteConfig / products / faq / news / story / column）
-  lib/            構造化データ・metadata・小さな関数
-public/images/    写真（→ README.md に一覧）
+    cart/                   カートと決済フォーム
+    guide/                  ガイドの共通パーツ
+    layout/                 Header / Footer / スマホ下部の購入バー
+    product/                商品の見せ方
+    sections/home/          TOPページの各セクション
+    ui/                     共通パーツ
+  data/                     ★ここを更新する
+                            siteConfig / products / shipping / faq /
+                            news / story / column / lycheeGuide / nutrition
+  lib/                      Stripe・注文検証・構造化データ・metadata
+content/blog/               ブログ記事（自動生成）
+scripts/                    ブログ生成スクリプト
+public/images/              写真（→ README.md に一覧）
 ```

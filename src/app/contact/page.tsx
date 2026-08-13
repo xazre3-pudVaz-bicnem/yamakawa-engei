@@ -10,21 +10,21 @@ import { buildMetadata } from "@/lib/metadata";
  * ─────────────────────────────────────────────
  * 現在の状態
  * ─────────────────────────────────────────────
- * 公開できるメールアドレス・フォームの送信先が未確認のため、
- * 「確実に届く連絡手段」だけを案内している。
+ * 電話・メール・Instagramを案内している。
  * 送信されても誰にも届かないフォームは置かない。
  *
  * 自社フォームを設置するとき
- *   1. data/siteConfig.ts の contactConfig.email に受信先を入れる
- *   2. contactConfig.formEndpoint に送信先（例: "/api/contact"）を入れる
- *   3. app/api/contact/route.ts を作り、Resend / SendGrid 等でメールを送る
+ *   1. app/api/contact/route.ts を作り、Resend / SendGrid 等でメールを送る
  *      （APIキーは環境変数から読むこと）
+ *   2. フォームのページを作る
+ *   3. data/siteConfig.ts の contactConfig.formUrl にそのパスを入れる
+ *      → このページにフォームへの導線が自動で出る
  */
 
 export const metadata = buildMetadata({
   title: "お問い合わせ",
   description:
-    "山川園芸へのお問い合わせ先です。ライチのご注文・配送・贈り物についてのご相談は、お電話または公式オンラインショップの問い合わせフォームよりご連絡ください。",
+    "山川園芸へのお問い合わせ先です。ライチのご注文・配送・贈り物についてのご相談は、お電話またはメールにてお気軽にご連絡ください。",
   path: "/contact",
 });
 
@@ -76,30 +76,28 @@ export default function ContactPage() {
             </p>
           </Reveal>
 
-          {/* 公式ショップの問い合わせフォーム */}
-          <Reveal className="border border-ink/12 px-6 py-7 md:px-8">
-            <p className="font-serif-en text-[0.68rem] uppercase tracking-[0.3em] text-lychee-deep">
-              Form
-            </p>
-            <h3 className="mt-3 font-mincho text-[1.15rem] text-forest">
-              お問い合わせフォーム
-            </h3>
-            <p className="mt-4 text-[0.9rem] leading-[1.95] text-ink/80">
-              お時間を気にせずご連絡いただけます。
-              ご注文後のお問い合わせも、こちらから承ります。
-            </p>
-            <p className="mt-6">
-              <a
-                href={contactConfig.shopContactUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center border border-forest bg-forest px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-paper transition-colors duration-300 hover:bg-forest-deep"
-              >
-                フォームを開く
-                <span className="sr-only">（新しいタブで開きます）</span>
-              </a>
-            </p>
-          </Reveal>
+          {/* 自社フォーム（設置したときだけ表示） */}
+          {contactConfig.formUrl && (
+            <Reveal className="border border-ink/12 px-6 py-7 md:px-8">
+              <p className="font-serif-en text-[0.68rem] uppercase tracking-[0.3em] text-lychee-deep">
+                Form
+              </p>
+              <h3 className="mt-3 font-mincho text-[1.15rem] text-forest">
+                お問い合わせフォーム
+              </h3>
+              <p className="mt-4 text-[0.9rem] leading-[1.95] text-ink/80">
+                お時間を気にせずご連絡いただけます。
+              </p>
+              <p className="mt-6">
+                <Link
+                  href={contactConfig.formUrl}
+                  className="inline-flex items-center justify-center border border-forest bg-forest px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-paper transition-colors duration-300 hover:bg-forest-deep"
+                >
+                  フォームを開く
+                </Link>
+              </p>
+            </Reveal>
+          )}
 
           {/* Instagram */}
           <Reveal className="border border-ink/12 px-6 py-7 md:px-8">

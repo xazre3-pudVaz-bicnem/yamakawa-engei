@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import QuantityStepper from "./QuantityStepper";
 import Photo from "@/components/ui/Photo";
-import { hasShippingAmount, shippingConfig } from "@/data/siteConfig";
+import { SHIPPING, isShippingConfigured } from "@/data/shipping";
 import { formatPrice } from "@/lib/utils";
 
 /**
  * カートの中身
  *
- * 送料は未確定（shippingConfig.type === "unconfirmed"）のため、
- * 合計金額に架空の送料を足さない。小計と「送料別」であることを明示する。
+ * 送料はご購入手続きの画面（Stripe）でお届け先に応じて加算される。
+ * ここでは商品の小計までを見せ、架空の送料を足さない。
  */
 export default function CartContents() {
   const { lines, subtotal, isReady, setQuantity, remove, totalQuantity } =
@@ -46,7 +46,7 @@ export default function CartContents() {
     );
   }
 
-  const shippingKnown = hasShippingAmount;
+  const shippingKnown = isShippingConfigured;
 
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-16">
@@ -139,25 +139,28 @@ export default function CartContents() {
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-moss">送料</dt>
             <dd className="text-right text-[0.85rem]">
-              {shippingKnown
-                ? (formatPrice(shippingConfig.flatFee) ?? "別途")
-                : "別途"}
+              {shippingKnown && SHIPPING.mode === "flat"
+                ? (formatPrice(SHIPPING.flatFee) ?? "別途")
+                : shippingKnown && SHIPPING.mode === "free"
+                  ? "無料"
+                  : "別途"}
             </dd>
           </div>
         </dl>
 
         <div className="mt-5 border-t border-ink/12 pt-5">
           <div className="flex items-baseline justify-between gap-4">
-            <span className="text-[0.9rem] text-moss">合計</span>
+            <span className="text-[0.9rem] text-moss">商品の小計</span>
             <span className="tnum font-mincho text-[1.35rem] text-forest">
               {formatPrice(subtotal) ?? "—"}
             </span>
           </div>
-          {!shippingKnown && (
-            <p className="mt-3 text-[0.78rem] leading-[1.85] text-moss">
-              送料は別途申し受けます。金額はご注文手続きの画面でご確認ください。
-            </p>
-          )}
+          {/* 送料は次の画面（Stripe）でお届け先に応じて確定するため、
+              ここで架空の合計を出さない */}
+          <p className="mt-3 text-[0.78rem] leading-[1.85] text-moss">
+            送料を含めた合計金額は、次のご購入手続きの画面でご確認いただけます。
+            {SHIPPING.carrier}でお届けします。
+          </p>
         </div>
 
         <Link

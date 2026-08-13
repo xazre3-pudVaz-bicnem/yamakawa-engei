@@ -20,7 +20,7 @@
  * ─────────────────────────────────────────────
  * add_to_cart      … カートに入れる（AddToCart）
  * view_cart        … カートを見た（CartContents）
- * begin_checkout   … 購入手続きへ進んだ（CheckoutPanel）
+ * begin_checkout   … 決済画面を開いた（StripeCheckout）
  * select_promotion … 解説ページから商品ページへのCTAクリック（ShopCta）
  *                    どの記事から購入導線に入ったかを見るために使う
  */

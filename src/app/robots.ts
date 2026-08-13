@@ -18,7 +18,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/cart", "/checkout", "/api/"],
+        // 購入フローと API は検索結果に出す意味がない。
+        // 各ページ側でも noindex を設定している（robots.txt だけに頼らない）。
+        disallow: ["/cart", "/checkout", "/order/", "/api/"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
