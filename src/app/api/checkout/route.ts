@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { validateOrder } from "@/lib/order";
-import { SHIPPING, buildShippingOptions, canCheckout, shippingBlockReason } from "@/data/shipping";
+import { canCheckout, shippingBlockReason } from "@/data/shipping";
 import { absoluteUrl, siteConfig } from "@/data/siteConfig";
 
 /**
@@ -24,6 +24,21 @@ import { absoluteUrl, siteConfig } from "@/data/siteConfig";
  * 失敗時は { message: string }。
  * メッセージはお客様にそのまま見せられる日本語だけにし、
  * Stripeの内部エラーや環境変数の状態を含めない。
+ *
+ * ─────────────────────────────────────────────
+ * 送料の扱い
+ * ─────────────────────────────────────────────
+ * 送料はお届け先の都道府県で変わるため、この時点では決まらない。
+ * ここでは0円のダミーの配送料だけを置き、
+ * お客様が住所を入力した時点で /api/checkout/shipping が
+ * 実際の送料に差し替える（Stripeの onShippingDetailsChange）。
+ *
+ * permissions.update_shipping_details を "server_only" にすることで、
+ * 配送情報の更新をサーバーだけに限定している。
+ * ブラウザから送料を書き換えることはできない。
+ *
+ * なおこの設定により、Apple Pay / Google Pay は自動的に無効になる
+ * （ウォレットは住所を直接扱うため、サーバー側での再計算を迂回してしまう）。
  */
 
 export const runtime = "nodejs";
@@ -48,11 +63,11 @@ export async function POST(request: Request) {
     );
   }
 
-  /* ---- 2. 送料が決まっているか ---- */
-  // 送料未設定のまま注文を受けると、送料分がまるごと赤字になる。
-  // 決まるまでは決済に進ませない。
+  /* ---- 2. 送料の料金表がそろっているか ---- */
+  // 料金表に欠けがあると送料が計算できず、送料分が赤字になる。
+  // そのときは決済に進ませない。
   if (!canCheckout) {
-    console.error(`[checkout] 送料が未設定のため決済を停止しました: ${shippingBlockReason}`);
+    console.error(`[checkout] 送料を計算できないため決済を停止しました: ${shippingBlockReason}`);
     return NextResponse.json(
       {
         message:
@@ -99,33 +114,38 @@ export async function POST(request: Request) {
       },
     }));
 
-  const shippingOptions = buildShippingOptions(validated.subtotal).map(
-    (option) => ({
-      shipping_rate_data: {
-        type: "fixed_amount" as const,
-        fixed_amount: { amount: option.amount, currency: "jpy" },
-        display_name: option.label,
-        ...(option.regionId
-          ? { metadata: { regionId: option.regionId } }
-          : {}),
-      },
-    }),
+  /** 個口数の計算に使う。カート内の総数量＝個口数 */
+  const totalQuantity = validated.lines.reduce(
+    (sum, line) => sum + line.quantity,
+    0,
   );
 
   /* ---- 5. Checkout Session を作成 ---- */
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      ui_mode: "embedded",
+      ui_mode: "embedded_page",
       locale: "ja",
 
       line_items: lineItems,
 
       // 日本国内向け。氏名・郵便番号・都道府県・住所を取得する
       shipping_address_collection: { allowed_countries: ["JP"] },
-      ...(shippingOptions.length > 0
-        ? { shipping_options: shippingOptions }
-        : {}),
+
+      // 配送情報の更新はサーバーだけに許す（送料の書き換えを防ぐ）
+      permissions: { update_shipping_details: "server_only" },
+
+      // 住所が入力されるまでは金額が決まらないので、0円のダミーを置く。
+      // /api/checkout/shipping が実際の送料に差し替える。
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            fixed_amount: { amount: 0, currency: "jpy" },
+            display_name: "お届け先を入力すると送料が表示されます",
+          },
+        },
+      ],
 
       // 電話番号は配送の連絡に使うため取得する
       phone_number_collection: { enabled: true },
@@ -133,12 +153,12 @@ export async function POST(request: Request) {
       // 決済完了後の戻り先。session_id は Stripe が差し込む
       return_url: `${absoluteUrl("/order/complete")}?session_id={CHECKOUT_SESSION_ID}`,
 
-      // 注文の突き合わせに使う情報。金額は入れない（Stripe側が正）
+      // 注文の突き合わせと、送料の再計算に使う。金額は入れない（Stripe側が正）
       metadata: {
         items: validated.lines
           .map((line) => `${line.product.slug}x${line.quantity}`)
           .join(","),
-        shippingMode: SHIPPING.mode,
+        totalQuantity: String(totalQuantity),
       },
 
       payment_intent_data: {

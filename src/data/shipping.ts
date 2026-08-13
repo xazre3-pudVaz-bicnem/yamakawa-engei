@@ -2,70 +2,71 @@
  * 送料の設定
  *
  * ─────────────────────────────────────────────
- * ★ ここを設定しないと決済できません ★
+ * 山川園芸の配送条件（確認済）
  * ─────────────────────────────────────────────
- * mode が "unconfirmed" のあいだ、Stripeの決済画面は開きません。
- * 送料が決まっていない状態で注文を受けると、
- * 送料分がまるごと赤字になるためです。
+ * ・350g・500g とも、すべて60サイズで発送する
+ * ・商品1点につき1個口。複数購入の場合も1点ごとに1個口
+ * ・すべてクロネコヤマトのクール宅急便
+ * ・発送元は鹿児島県指宿市（ヤマトの地帯区分では「九州」発）
  *
- * 送料が決まったら、下の SHIPPING を書き換えてください。
- * それだけで、カート・購入手続き・配送ページ・特商法の表示と、
- * Stripeに渡す送料がすべて一致します。
+ * したがって送料は次の式で決まる。
  *
- * ─────────────────────────────────────────────
- * 設定のしかた
- * ─────────────────────────────────────────────
- * ■ 全国一律にする場合
- *     mode: "flat",
- *     flatFee: 1200,            // 税込
- *
- * ■ 地域別にする場合
- *     mode: "by_region",
- *     regions の各 fee に税込金額を入れる（null のままにしない）
- *
- * ■ 送料無料にする場合
- *     mode: "free",
- *
- * ■ 一定額以上で送料無料にする場合
- *     上記に加えて freeShippingThreshold: 10000 のように設定
+ *   （九州発・60サイズの宅急便運賃 ＋ クール宅急便60サイズの追加料金）
+ *   × カート内の商品総数量
  *
  * ─────────────────────────────────────────────
- * 地域別を選んだときの注意
+ * 料金が改定されたとき
  * ─────────────────────────────────────────────
- * Stripeの決済画面は、お客様が入力した住所から送料を自動で選ぶ仕組みを
- * 持っていません。地域別にすると、お客様自身が地域を選ぶ形になります。
- * そのため、選ばれた地域とお届け先の住所が食い違う可能性があります。
+ * このファイルの YAMATO_60_FROM_KYUSHU と COOL_SURCHARGE_60 の
+ * 2箇所だけを直せば、画面表示・Stripeに渡す送料・配送ページの料金表が
+ * すべて同時に更新される。ほかのファイルは触らなくてよい。
  *
- * これに対しては、Webhook（api/stripe/webhook）で
- * 「選ばれた送料の地域」と「実際のお届け先の都道府県」を突き合わせ、
- * ずれていればログに警告を出すようにしています。
- * 運用が煩雑になるため、可能であれば全国一律をおすすめします。
+ * 出典（改定時は必ず公式で確認すること）
+ *   宅急便運賃一覧表  https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html
+ *   クール宅急便      https://www.kuronekoyamato.co.jp/ytc/customer/send/services/cool/
  */
 
-export type ShippingMode = "unconfirmed" | "flat" | "by_region" | "free";
+/* ================================================================
+   地域区分（ヤマト運輸の地帯区分）と47都道府県の対応
+================================================================ */
 
-export type ShippingRegion = {
-  id: string;
+export type RegionId =
+  | "hokkaido"
+  | "kita-tohoku"
+  | "minami-tohoku"
+  | "kanto"
+  | "shinetsu"
+  | "hokuriku"
+  | "chubu"
+  | "kansai"
+  | "chugoku"
+  | "shikoku"
+  | "kyushu"
+  | "okinawa";
+
+export type Region = {
+  id: RegionId;
   /** お客様に見せる地域名 */
   name: string;
-  /** この地域に含まれる都道府県（住所との突き合わせに使う） */
+  /** この地域に属する都道府県（正式名称） */
   prefectures: string[];
-  /** 送料（税込）。未設定なら null */
-  fee: number | null;
 };
 
 /**
- * 地域の区分
- * ヤマト運輸のクール便を想定した一般的な区分です。
- * 実際の料金表に合わせて、区分ごと変えていただいてかまいません。
+ * 地域区分と都道府県の対応表
+ * ヤマト運輸の地帯区分にそろえている。47都道府県すべてを漏れなく記載する。
  */
-const REGIONS: ShippingRegion[] = [
-  { id: "hokkaido", name: "北海道", prefectures: ["北海道"], fee: null },
+export const REGIONS: Region[] = [
+  { id: "hokkaido", name: "北海道", prefectures: ["北海道"] },
   {
-    id: "tohoku",
-    name: "東北",
-    prefectures: ["青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"],
-    fee: null,
+    id: "kita-tohoku",
+    name: "北東北",
+    prefectures: ["青森県", "秋田県", "岩手県"],
+  },
+  {
+    id: "minami-tohoku",
+    name: "南東北",
+    prefectures: ["宮城県", "山形県", "福島県"],
   },
   {
     id: "kanto",
@@ -80,44 +81,32 @@ const REGIONS: ShippingRegion[] = [
       "神奈川県",
       "山梨県",
     ],
-    fee: null,
+  },
+  { id: "shinetsu", name: "信越", prefectures: ["新潟県", "長野県"] },
+  {
+    id: "hokuriku",
+    name: "北陸",
+    prefectures: ["富山県", "石川県", "福井県"],
   },
   {
-    id: "shinetsu-hokuriku",
-    name: "信越・北陸",
-    prefectures: ["新潟県", "長野県", "富山県", "石川県", "福井県"],
-    fee: null,
-  },
-  {
-    id: "tokai",
-    name: "東海",
+    id: "chubu",
+    name: "中部",
     prefectures: ["静岡県", "愛知県", "岐阜県", "三重県"],
-    fee: null,
   },
   {
-    id: "kinki",
-    name: "近畿",
-    prefectures: [
-      "滋賀県",
-      "京都府",
-      "大阪府",
-      "兵庫県",
-      "奈良県",
-      "和歌山県",
-    ],
-    fee: null,
+    id: "kansai",
+    name: "関西",
+    prefectures: ["大阪府", "京都府", "滋賀県", "奈良県", "和歌山県", "兵庫県"],
   },
   {
     id: "chugoku",
     name: "中国",
-    prefectures: ["鳥取県", "島根県", "岡山県", "広島県", "山口県"],
-    fee: null,
+    prefectures: ["岡山県", "広島県", "山口県", "鳥取県", "島根県"],
   },
   {
     id: "shikoku",
     name: "四国",
-    prefectures: ["徳島県", "香川県", "愛媛県", "高知県"],
-    fee: null,
+    prefectures: ["香川県", "徳島県", "愛媛県", "高知県"],
   },
   {
     id: "kyushu",
@@ -131,26 +120,202 @@ const REGIONS: ShippingRegion[] = [
       "宮崎県",
       "鹿児島県",
     ],
-    fee: null,
   },
-  { id: "okinawa", name: "沖縄", prefectures: ["沖縄県"], fee: null },
+  { id: "okinawa", name: "沖縄", prefectures: ["沖縄県"] },
 ];
 
+/** 対応表に載っている都道府県の数。47でなければ設定漏れ */
+export const PREFECTURE_COUNT = REGIONS.reduce(
+  (sum, region) => sum + region.prefectures.length,
+  0,
+);
+
+/* ================================================================
+   料金表
+================================================================ */
+
+/**
+ * 宅急便 60サイズ・九州発の運賃（税込・円）
+ * 出典: ヤマト運輸「宅急便運賃一覧表」
+ * 発送元の鹿児島県指宿市は「九州」発にあたる。
+ */
+const YAMATO_60_FROM_KYUSHU: Record<RegionId, number> = {
+  hokkaido: 2340,
+  "kita-tohoku": 1760,
+  "minami-tohoku": 1760,
+  kanto: 1460,
+  shinetsu: 1460,
+  hokuriku: 1190,
+  chubu: 1190,
+  kansai: 1060,
+  chugoku: 940,
+  shikoku: 1060,
+  kyushu: 940,
+  okinawa: 1320,
+};
+
+/**
+ * クール宅急便 60サイズの追加料金（税込・円）
+ * 出典: ヤマト運輸「クール宅急便」オプション料金
+ */
+const COOL_SURCHARGE_60 = 275;
+
+/** 荷姿。商品1点につき1個口 */
+export const PARCEL = {
+  size: "60サイズ",
+  service: "クロネコヤマト クール宅急便",
+  /** 商品1点あたりの個口数 */
+  parcelsPerItem: 1,
+} as const;
+
+/** 1個口あたりの送料（税込）。宅急便運賃＋クール料金 */
+export function ratePerParcel(regionId: RegionId): number {
+  return YAMATO_60_FROM_KYUSHU[regionId] + COOL_SURCHARGE_60;
+}
+
+/** 料金表（画面表示用）。内訳も持たせて、根拠が分かるようにする */
+export const RATE_TABLE = REGIONS.map((region) => ({
+  ...region,
+  base: YAMATO_60_FROM_KYUSHU[region.id],
+  cool: COOL_SURCHARGE_60,
+  total: ratePerParcel(region.id),
+}));
+
+/* ================================================================
+   クール宅急便を取り扱えない地域
+================================================================ */
+
+/**
+ * クール宅急便が届けられない住所
+ *
+ * ヤマト運輸では離島の追加料金は原則ないが、
+ * 一部の島はクール宅急便そのものを取り扱っていない。
+ * 出典: ヤマト運輸「クール宅急便」
+ *   伊豆諸島のうち 式根島・利島・御蔵島・青ヶ島、および小笠原村（小笠原諸島）
+ *
+ * 対応できない住所が増えたら、この配列に1行足すだけでよい。
+ * 住所の文字列に keyword が含まれていたら、決済を止めて案内を出す。
+ */
+export const COOL_UNAVAILABLE_AREAS: Array<{
+  /** 住所に含まれていたら対象とみなす文字列 */
+  keyword: string;
+  /** お客様への案内に使う地域名 */
+  label: string;
+}> = [
+  { keyword: "式根島", label: "式根島" },
+  { keyword: "利島", label: "利島" },
+  { keyword: "御蔵島", label: "御蔵島" },
+  { keyword: "青ヶ島", label: "青ヶ島" },
+  { keyword: "青ケ島", label: "青ヶ島" },
+  { keyword: "小笠原", label: "小笠原諸島" },
+];
+
+/* ================================================================
+   参照ヘルパー
+================================================================ */
+
+/**
+ * 都道府県名から地域を引く。
+ * Stripeから届く値は「東京都」のような正式名称だが、
+ * 「東京」のように末尾が欠けた形でも拾えるようにしている。
+ */
+export function findRegionByPrefecture(
+  prefecture: string | null | undefined,
+): Region | undefined {
+  if (!prefecture) return undefined;
+  const value = prefecture.trim();
+  if (!value) return undefined;
+
+  return REGIONS.find((region) =>
+    region.prefectures.some(
+      (pref) => pref === value || pref.replace(/[都道府県]$/, "") === value,
+    ),
+  );
+}
+
+/** 住所がクール宅急便の対象外かを判定する */
+export function findUnavailableArea(
+  addressParts: Array<string | null | undefined>,
+): { keyword: string; label: string } | undefined {
+  const joined = addressParts.filter(Boolean).join(" ");
+  if (!joined) return undefined;
+  return COOL_UNAVAILABLE_AREAS.find((area) => joined.includes(area.keyword));
+}
+
+export type ShippingQuote =
+  | {
+      ok: true;
+      region: Region;
+      /** 個口数（＝商品の総数量） */
+      parcels: number;
+      /** 1個口あたりの送料（税込） */
+      unitRate: number;
+      /** 送料の合計（税込） */
+      amount: number;
+      /** Stripeの決済画面に出す名前 */
+      label: string;
+    }
+  | { ok: false; reason: string };
+
+/**
+ * 送料を計算する。
+ *
+ * ★必ずサーバー側でだけ呼ぶこと★
+ * クライアントから送られてきた送料額は一切信用しない。
+ *
+ * @param prefecture お届け先の都道府県（Stripeが収集した住所の state）
+ * @param totalQuantity カート内の商品の総数量（＝個口数）
+ * @param addressParts 市区町村・番地など。離島の判定に使う
+ */
+export function quoteShipping(
+  prefecture: string | null | undefined,
+  totalQuantity: number,
+  addressParts: Array<string | null | undefined> = [],
+): ShippingQuote {
+  if (!Number.isInteger(totalQuantity) || totalQuantity < 1) {
+    return { ok: false, reason: "ご注文の数量を確認できませんでした。" };
+  }
+
+  const unavailable = findUnavailableArea([prefecture, ...addressParts]);
+  if (unavailable) {
+    return {
+      ok: false,
+      reason: `${unavailable.label}へは、クール便でのお届けを承っておりません。お手数ですが、お問い合わせよりご相談ください。`,
+    };
+  }
+
+  const region = findRegionByPrefecture(prefecture);
+  if (!region) {
+    return {
+      ok: false,
+      reason:
+        "お届け先の都道府県を確認できませんでした。住所をご確認のうえ、もう一度お試しください。",
+    };
+  }
+
+  const unitRate = ratePerParcel(region.id);
+  const parcels = totalQuantity * PARCEL.parcelsPerItem;
+
+  return {
+    ok: true,
+    region,
+    parcels,
+    unitRate,
+    amount: unitRate * parcels,
+    label:
+      parcels === 1
+        ? `${PARCEL.service}（${PARCEL.size}／${region.name}）`
+        : `${PARCEL.service}（${PARCEL.size}／${region.name}／${parcels}個口）`,
+  };
+}
+
+/* ================================================================
+   画面表示用の情報
+================================================================ */
+
 export const SHIPPING = {
-  /** ★ ここを書き換える ★ */
-  mode: "unconfirmed" as ShippingMode,
-
-  /** 全国一律のときの送料（税込）。mode が "flat" のときだけ使う */
-  flatFee: null as number | null,
-
-  /** 地域別のときの送料。mode が "by_region" のときだけ使う */
-  regions: REGIONS,
-
-  /** この金額以上で送料無料。設定しない場合は null */
-  freeShippingThreshold: null as number | null,
-
   /** 配送方法 [確認済] */
-  carrier: "ヤマト運輸のクール便",
+  carrier: "クロネコヤマトのクール宅急便",
 
   /** 配送可能地域 [確認済] */
   deliverableArea: "離島を除く全国",
@@ -166,94 +331,25 @@ export const SHIPPING = {
 
   /** 共通の注記 */
   note: "収穫の状況や天候により、発送が前後する場合があります。",
+
+  /** 送料の考え方（画面に出す説明） */
+  policy:
+    "すべて60サイズのクール宅急便でお送りします。商品1点につき1個口のため、2点ご注文の場合は2個口分の送料がかかります。",
 };
 
-/* ================================================================
-   参照ヘルパー
-================================================================ */
-
-/** 画面に送料の金額を出せる状態か */
-export const isShippingConfigured: boolean =
-  SHIPPING.mode === "free" ||
-  (SHIPPING.mode === "flat" && SHIPPING.flatFee !== null) ||
-  (SHIPPING.mode === "by_region" &&
-    SHIPPING.regions.length > 0 &&
-    SHIPPING.regions.every((region) => region.fee !== null));
-
 /**
- * 決済に進んでよいか。
- * 送料が決まっていないうちは、Stripeのセッションを作らせない。
+ * 送料の金額を画面に出せる状態か。
+ * 料金表を持っているので通常は true。
+ * 料金表に欠けがある場合だけ false になり、そのとき決済は止まる。
  */
+export const isShippingConfigured: boolean =
+  PREFECTURE_COUNT === 47 &&
+  REGIONS.every((region) => Number.isFinite(YAMATO_60_FROM_KYUSHU[region.id]));
+
+/** 決済に進んでよいか */
 export const canCheckout: boolean = isShippingConfigured;
 
-/** 送料が未確定である理由（管理者向けのログ用） */
+/** 送料を出せない理由（管理者向けのログ用） */
 export const shippingBlockReason: string | null = canCheckout
   ? null
-  : SHIPPING.mode === "unconfirmed"
-    ? "src/data/shipping.ts の SHIPPING.mode が \"unconfirmed\" のままです。"
-    : SHIPPING.mode === "flat"
-      ? "SHIPPING.mode が \"flat\" ですが flatFee が未設定です。"
-      : "SHIPPING.mode が \"by_region\" ですが、fee が未設定の地域があります。";
-
-/** 都道府県から地域を引く（Webhookでの突き合わせに使う） */
-export function findRegionByPrefecture(
-  prefecture: string,
-): ShippingRegion | undefined {
-  const normalized = prefecture.trim();
-  return SHIPPING.regions.find((region) =>
-    region.prefectures.some(
-      (pref) => pref === normalized || pref.replace(/[都道府県]$/, "") === normalized,
-    ),
-  );
-}
-
-/**
- * Stripe に渡す送料の選択肢を組み立てる。
- *
- * 送料が未確定のときは空配列を返す（呼び出し側で決済を止めている）。
- * 金額は必ずこの関数を通し、画面表示と食い違わないようにする。
- */
-export function buildShippingOptions(subtotal: number): Array<{
-  /** 画面に出る名前 */
-  label: string;
-  /** 税込金額（円） */
-  amount: number;
-  /** 地域別のときの地域ID。全国一律・無料のときは null */
-  regionId: string | null;
-}> {
-  // 一定額以上で送料無料
-  if (
-    SHIPPING.freeShippingThreshold !== null &&
-    subtotal >= SHIPPING.freeShippingThreshold
-  ) {
-    return [{ label: "送料無料", amount: 0, regionId: null }];
-  }
-
-  if (SHIPPING.mode === "free") {
-    return [{ label: "送料無料", amount: 0, regionId: null }];
-  }
-
-  if (SHIPPING.mode === "flat" && SHIPPING.flatFee !== null) {
-    return [
-      {
-        label: `${SHIPPING.carrier}（全国一律）`,
-        amount: SHIPPING.flatFee,
-        regionId: null,
-      },
-    ];
-  }
-
-  if (SHIPPING.mode === "by_region") {
-    return SHIPPING.regions
-      .filter((region): region is ShippingRegion & { fee: number } =>
-        region.fee !== null,
-      )
-      .map((region) => ({
-        label: `${SHIPPING.carrier}／${region.name}`,
-        amount: region.fee,
-        regionId: region.id,
-      }));
-  }
-
-  return [];
-}
+  : "src/data/shipping.ts の料金表または都道府県の対応表に漏れがあります。";

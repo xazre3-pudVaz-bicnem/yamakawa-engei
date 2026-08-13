@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   EmbeddedCheckout,
@@ -39,81 +39,109 @@ const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 export default function StripeCheckout() {
   const { lines, subtotal, totalQuantity, isReady } = useCart();
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** 「もう一度試す」で作り直すためのカウンタ */
+  /** 「もう一度試す」で決済フォームを作り直すためのカウンタ */
   const [attempt, setAttempt] = useState(0);
-  /** 同じ試行で二重にセッションを作らないための目印 */
-  const startedAttempt = useRef(-1);
 
-  const hasItems = isReady && lines.length > 0;
+  // カートの読み込みが終わり、中身があるときだけ決済フォームを描画する
+  // （下の早期リターンで判定している）
 
   /**
    * 決済セッションを作る。
-   * カートの中身が確定してから1度だけ実行する。
+   * Stripeが読み込み時にこの関数を1度だけ呼び、
+   * 返した clientSecret でフォームを描画する。
    *
-   * setState は必ず await のあとで呼ぶ（同期的に呼ぶと再レンダーが連鎖するため）。
+   * カートの中身が確定してから <EmbeddedCheckoutProvider> を描画しているので、
+   * ここで参照する lines は最新の内容になっている。
    */
-  useEffect(() => {
-    if (!hasItems) return;
-    if (startedAttempt.current === attempt) return;
-    startedAttempt.current = attempt;
+  const fetchClientSecret = useCallback(async (): Promise<string> => {
+    const response = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // 送るのは slug と数量だけ。金額は送らない。
+      body: JSON.stringify({
+        lines: lines.map((line) => ({
+          slug: line.product.slug,
+          quantity: line.quantity,
+        })),
+      }),
+    });
 
-    let cancelled = false;
+    const payload: { clientSecret?: string; message?: string } = await response
+      .json()
+      .catch(() => ({}));
 
-    void (async () => {
+    if (!response.ok || !payload.clientSecret) {
+      setError(
+        payload.message ??
+          "ただいま決済のお手続きを開始できませんでした。お手数ですが、時間をおいてもう一度お試しください。",
+      );
+      throw new Error("checkout-session-unavailable");
+    }
+
+    track("begin_checkout", {
+      currency: "JPY",
+      value: subtotal ?? 0,
+      items: lines.map((line) => ({
+        item_id: line.product.id,
+        item_name: line.product.name,
+        price: line.product.price ?? undefined,
+        quantity: line.quantity,
+      })),
+    });
+
+    return payload.clientSecret;
+  }, [lines, subtotal]);
+
+  /**
+   * お届け先が入力されたら、サーバーで送料を計算し直す。
+   *
+   * 送料の金額はここでは扱わない。
+   * サーバーが住所と数量から計算し、Stripeのセッションを更新する。
+   */
+  const onShippingDetailsChange = useCallback(
+    async (event: {
+      checkoutSessionId: string;
+      shippingDetails: unknown;
+    }): Promise<{ type: "accept" } | { type: "reject"; errorMessage: string }> => {
       try {
-        const response = await fetch("/api/checkout", {
+        const response = await fetch("/api/checkout/shipping", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // 送るのは slug と数量だけ。金額は送らない。
           body: JSON.stringify({
-            lines: lines.map((line) => ({
-              slug: line.product.slug,
-              quantity: line.quantity,
-            })),
+            checkout_session_id: event.checkoutSessionId,
+            shipping_details: event.shippingDetails,
           }),
         });
 
-        const payload: { clientSecret?: string; message?: string } =
-          await response.json().catch(() => ({}));
+        const result: { type?: string; message?: string } = await response
+          .json()
+          .catch(() => ({}));
 
-        if (cancelled) return;
-
-        if (!response.ok || !payload.clientSecret) {
-          setError(
-            payload.message ??
-              "ただいま決済のお手続きを開始できませんでした。お手数ですが、時間をおいてもう一度お試しください。",
-          );
-          return;
+        if (result.type === "error") {
+          return {
+            type: "reject",
+            errorMessage:
+              result.message ??
+              "送料を計算できませんでした。住所をご確認ください。",
+          };
         }
 
-        setClientSecret(payload.clientSecret);
-        track("begin_checkout", {
-          currency: "JPY",
-          value: subtotal ?? 0,
-          items: lines.map((line) => ({
-            item_id: line.product.id,
-            item_name: line.product.name,
-            price: line.product.price ?? undefined,
-            quantity: line.quantity,
-          })),
-        });
+        return { type: "accept" };
       } catch {
-        if (cancelled) return;
-        setError("通信に失敗しました。電波の良い場所で、もう一度お試しください。");
+        return {
+          type: "reject",
+          errorMessage:
+            "通信に失敗しました。電波の良い場所で、もう一度お試しください。",
+        };
       }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasItems, attempt, lines, subtotal]);
+    },
+    [],
+  );
 
   /** 「もう一度試す」。イベントハンドラなので同期的なsetStateで問題ない */
   function retry() {
     setError(null);
-    setClientSecret(null);
     setAttempt((n) => n + 1);
   }
 
@@ -155,22 +183,15 @@ export default function StripeCheckout() {
     return <ErrorPanel message={error} onRetry={retry} />;
   }
 
-  /* ---- 決済フォームの準備中 ---- */
-  if (!clientSecret) {
-    return (
-      <p className="py-16 text-center text-[0.9rem] text-moss">
-        お支払い画面を準備しています…
-      </p>
-    );
-  }
-
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_19rem] lg:items-start lg:gap-14">
       {/* Stripeの決済フォーム。スマホでも横に伸びないよう幅を親に預ける */}
       <div className="min-w-0">
         <EmbeddedCheckoutProvider
+          // key を変えると、フォームごと作り直される（「もう一度試す」用）
+          key={attempt}
           stripe={stripePromise}
-          options={{ clientSecret }}
+          options={{ fetchClientSecret, onShippingDetailsChange }}
         >
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>

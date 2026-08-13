@@ -2,7 +2,7 @@ import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
 import { checkoutConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
-import { SHIPPING as shippingConfig, isShippingConfigured } from "@/data/shipping";
+import { RATE_TABLE, SHIPPING as shippingConfig } from "@/data/shipping";
 import { buildMetadata } from "@/lib/metadata";
 import { formatPrice } from "@/lib/utils";
 
@@ -12,32 +12,21 @@ import { formatPrice } from "@/lib/utils";
  * ─────────────────────────────────────────────
  * 送料の表示
  * ─────────────────────────────────────────────
- * 表示はすべて src/data/shipping.ts から作っている。
- * そちらを設定すれば、このページ・カート・決済画面・お買い物ガイド・
- * 特定商取引法の表記、そしてStripeに渡す送料までが一度に揃う。
+ * 料金表は src/data/shipping.ts の RATE_TABLE から作っている。
+ * 運賃が改定されたときは、そちらの数値を1箇所直せば、
+ * このページ・カート・決済画面・Stripeに渡す送料がすべて同時に変わる。
  *
- *   全国一律にするとき: mode: "flat", flatFee: 1200
- *   地域別にするとき  : mode: "by_region"（各 regions の fee を埋める）
- *   送料無料のとき    : mode: "free"
- *
- * 送料が未設定のあいだは金額を出さず、Stripeの決済画面も開かない。
- * 架空の送料は絶対に載せない。
+ * このページに金額をベタ書きしないこと（表と実際の請求額がずれる原因になる）。
  */
 
 export const metadata = buildMetadata({
   title: "配送・送料について",
   description:
-    "山川園芸オンラインショップの配送についてのご案内です。ヤマト運輸のクール便で、離島を除く全国へお届けします。発送の時期と送料についてご説明します。",
+    "山川園芸オンラインショップの配送についてのご案内です。クロネコヤマトのクール宅急便で、離島を除く全国へお届けします。地域別の送料と、発送の時期をご案内します。",
   path: "/shipping",
 });
 
 export default function ShippingPage() {
-  const isFlat = shippingConfig.mode === "flat" && shippingConfig.flatFee !== null;
-  const isByRegion = shippingConfig.mode === "by_region";
-  const isFree = shippingConfig.mode === "free";
-  /** 金額をまだ出せない状態 */
-  const isUnconfirmed = !isShippingConfigured;
-
   return (
     <>
       <PageHero
@@ -111,84 +100,86 @@ export default function ShippingPage() {
           />
 
           <div className="mt-10">
-            {isUnconfirmed && (
-              <div className="border border-ink/12 bg-paper-warm px-6 py-7">
-                <p className="text-[0.92rem] leading-[2] text-ink/80">
-                  送料は現在確認中です。金額が決まりしだい、こちらでご案内します。
-                  お急ぎの場合は、お手数ですがお問い合わせよりご確認ください。
-                </p>
-                <p className="mt-5">
-                  <Link
-                    href="/contact"
-                    className="text-[0.88rem] text-lychee-deep underline underline-offset-8 hover:text-lychee"
+            <p className="text-[0.93rem] leading-[2.05] text-ink/85">
+              {shippingConfig.policy}
+            </p>
+            <p className="mt-4 text-[0.93rem] leading-[2.05] text-ink/85">
+              送料はお届け先の地域によって変わります。
+              下表は<strong className="font-medium">1個口あたり</strong>の金額です。
+              ご購入手続きの画面でお届け先をご入力いただくと、
+              個口数を掛けた送料と合計金額が自動で表示されます。
+            </p>
+
+            {/* 料金表。data/shipping.ts の1箇所を直せばここも変わる。
+                スマホでも横スクロールせずに金額が読めるよう、
+                幅を固定せず、内訳だけを広い画面で出している。 */}
+            <table className="mt-8 w-full border-collapse text-left text-[0.9rem]">
+              <caption className="sr-only">
+                お届け地域別の送料（60サイズ・クール宅急便・1個口あたり・税込）
+              </caption>
+              <thead>
+                <tr className="border-y border-ink/15">
+                  <th scope="col" className="py-4 pr-4 font-normal text-moss">
+                    お届け地域
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[7.5rem] py-4 text-right font-normal text-moss sm:w-[13rem]"
                   >
-                    送料について問い合わせる
-                  </Link>
-                </p>
-              </div>
-            )}
+                    1個口あたり
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink/12">
+                {RATE_TABLE.map((region) => (
+                  <tr key={region.id}>
+                    <th scope="row" className="py-4 pr-4 align-top font-normal">
+                      {region.name}
+                      <span className="mt-1 block text-[0.75rem] font-normal leading-[1.75] text-moss">
+                        {region.prefectures.join("・")}
+                      </span>
+                    </th>
+                    <td className="tnum py-4 text-right align-top">
+                      <span className="font-mincho text-[1.05rem] text-forest">
+                        {formatPrice(region.total)}
+                      </span>
+                      {/* 内訳は画面が狭いと読みにくいので、広い画面でだけ出す */}
+                      <span className="mt-1 hidden text-[0.72rem] leading-[1.7] text-moss sm:block">
+                        運賃 {formatPrice(region.base)} ＋ クール{" "}
+                        {formatPrice(region.cool)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-            {isFree && (
-              <p className="text-[0.95rem] leading-[2] text-ink/85">
-                送料は当園が負担いたします。
+            <p className="mt-4 text-[0.8rem] leading-[1.9] text-moss sm:hidden">
+              金額は税込です。ヤマト運輸の宅急便運賃（60サイズ）に、
+              クール宅急便の追加料金{formatPrice(RATE_TABLE[0].cool)}を加えています。
+            </p>
+
+            <p className="mt-5 text-[0.83rem] leading-[1.9] text-moss">
+              ※ 表の金額はヤマト運輸の宅急便運賃（60サイズ・鹿児島県発）に、
+              クール宅急便の追加料金を加えたものです。
+              運賃が改定された場合は、こちらの表も更新します。
+            </p>
+
+            {/* 個口数の考え方を具体例で示す */}
+            <div className="mt-8 border border-ink/12 bg-paper-warm px-6 py-6">
+              <p className="font-mincho text-[1rem] text-forest">
+                送料の計算例
               </p>
-            )}
-
-            {isFlat && (
-              <p className="text-[0.95rem] leading-[2] text-ink/85">
-                全国一律{" "}
-                <span className="tnum font-mincho text-[1.25rem] text-forest">
-                  {formatPrice(shippingConfig.flatFee)}
-                </span>
-                （税込）
+              <p className="mt-3 text-[0.88rem] leading-[1.95] text-ink/80">
+                生ライチ 500g を2点、350g を1点ご注文の場合は
+                <strong className="mx-1 font-medium">3個口</strong>
+                となり、上表の金額の3倍が送料になります。
               </p>
-            )}
-
-            {isByRegion && !isUnconfirmed && (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[24rem] border-collapse text-left text-[0.9rem]">
-                    <caption className="sr-only">地域別の送料</caption>
-                    <thead>
-                      <tr className="border-y border-ink/15">
-                        <th scope="col" className="py-4 pr-6 font-normal text-moss">
-                          お届け地域
-                        </th>
-                        <th scope="col" className="py-4 font-normal text-moss">
-                          送料（税込）
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-ink/12">
-                      {shippingConfig.regions.map((region) => (
-                        <tr key={region.id}>
-                          <th scope="row" className="py-4 pr-6 font-normal">
-                            {region.name}
-                            <span className="mt-1 block text-[0.78rem] font-normal text-moss">
-                              {region.prefectures.join("・")}
-                            </span>
-                          </th>
-                          <td className="tnum py-4 align-top">
-                            {formatPrice(region.fee)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-5 text-[0.83rem] leading-[1.9] text-moss">
-                  ご購入手続きの画面で、お届け先の地域をお選びください。
-                  合計金額はその場でご確認いただけます。
-                </p>
-              </>
-            )}
-
-            {shippingConfig.freeShippingThreshold !== null && (
-              <p className="mt-5 text-[0.88rem] text-moss">
-                {formatPrice(shippingConfig.freeShippingThreshold)}
-                以上のお買い上げで送料無料になります。
+              <p className="mt-2 text-[0.83rem] leading-[1.9] text-moss">
+                商品は1点ずつ別の箱でお送りするため、まとめ買いでも
+                個口数分の送料がかかります。あらかじめご了承ください。
               </p>
-            )}
+            </div>
           </div>
         </Reveal>
 

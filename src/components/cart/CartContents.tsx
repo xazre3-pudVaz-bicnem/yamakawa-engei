@@ -139,11 +139,7 @@ export default function CartContents() {
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-moss">送料</dt>
             <dd className="text-right text-[0.85rem]">
-              {shippingKnown && SHIPPING.mode === "flat"
-                ? (formatPrice(SHIPPING.flatFee) ?? "別途")
-                : shippingKnown && SHIPPING.mode === "free"
-                  ? "無料"
-                  : "別途"}
+              {shippingKnown ? "お届け先により変動" : "別途"}
             </dd>
           </div>
         </dl>
@@ -158,8 +154,16 @@ export default function CartContents() {
           {/* 送料は次の画面（Stripe）でお届け先に応じて確定するため、
               ここで架空の合計を出さない */}
           <p className="mt-3 text-[0.78rem] leading-[1.85] text-moss">
-            送料を含めた合計金額は、次のご購入手続きの画面でご確認いただけます。
-            {SHIPPING.carrier}でお届けします。
+            送料は次のご購入手続きの画面で、お届け先を入力すると自動で計算されます。
+            {SHIPPING.carrier}で、商品1点につき1個口でお送りします。
+          </p>
+          <p className="mt-2">
+            <Link
+              href="/shipping"
+              className="text-[0.78rem] text-lychee-deep underline underline-offset-4 hover:text-lychee"
+            >
+              地域別の送料を見る
+            </Link>
           </p>
         </div>
 

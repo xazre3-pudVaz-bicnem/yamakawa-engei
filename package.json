@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "blog:generate": "tsx scripts/generate-daily-post.ts"
+    "blog:generate": "tsx scripts/generate-daily-post.ts",
+    "check:shipping": "tsx scripts/check-shipping.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
