@@ -10,7 +10,7 @@
  */
 
 import type Stripe from "stripe";
-import { isMailConfigured, sendMail } from "../src/lib/mail";
+import { getFarmMailTo, isMailConfigured, sendMail } from "../src/lib/mail";
 import { buildCustomerMail, buildFarmMail } from "../src/lib/order-mail";
 import { contactConfig, siteConfig } from "../src/data/siteConfig";
 
@@ -34,6 +34,9 @@ console.log(
   `  ORDER_MAIL_TO   = ${to || `未設定（siteConfig の ${contactConfig.email ?? "（メールなし）"} に送ります）`}`,
 );
 
+const farmTo = getFarmMailTo(contactConfig.email);
+console.log(`  → 農園への通知先 = ${farmTo.join(" , ") || "（なし）"}`);
+
 console.log("\n■ 確認");
 line(Boolean(apiKey), "APIキーが設定されている");
 line(apiKey.startsWith("re_") || !apiKey, "APIキーの形が正しい（re_ で始まる）");
@@ -43,10 +46,10 @@ line(
   "差出人の形が正しい",
   from ? "" : "（例: 山川園芸 <order@yamakawaengei.com>）",
 );
+line(farmTo.length > 0, "農園側の受信先がある", `${farmTo.length}件`);
 line(
-  Boolean(to || contactConfig.email),
-  "農園側の受信先がある",
-  to || contactConfig.email || "",
+  farmTo.every((address) => /^[^@\s]+@[^@\s]+$/.test(address)),
+  "受信先の形が正しい",
 );
 line(isMailConfigured(), "メール送信が有効");
 

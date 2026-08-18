@@ -22,7 +22,8 @@
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 export type MailMessage = {
-  to: string;
+  /** 宛先。複数指定できる */
+  to: string | string[];
   subject: string;
   /** 本文（プレーンテキスト）。HTMLメールは使わない */
   text: string;
@@ -41,9 +42,21 @@ export function isMailConfigured(): boolean {
   );
 }
 
-/** 農園側の受信先（注文通知の宛先） */
-export function getFarmMailTo(fallback: string | null): string | null {
-  return process.env.ORDER_MAIL_TO?.trim() || fallback;
+/**
+ * 農園側の受信先（注文通知の宛先）。
+ *
+ * ORDER_MAIL_TO はカンマ区切りで複数指定できる。
+ * 1つのアドレスが迷惑メール扱いになっても注文を取りこぼさないよう、
+ * 携帯で受け取れるアドレスなどを併記しておくとよい。
+ */
+export function getFarmMailTo(fallback: string | null): string[] {
+  const configured = (process.env.ORDER_MAIL_TO ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter((address) => address.includes("@"));
+
+  if (configured.length > 0) return configured;
+  return fallback ? [fallback] : [];
 }
 
 /**
@@ -74,7 +87,7 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
       },
       body: JSON.stringify({
         from,
-        to: [message.to],
+        to: Array.isArray(message.to) ? message.to : [message.to],
         subject: message.subject,
         text: message.text,
         ...(message.replyTo ? { reply_to: message.replyTo } : {}),
