@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsx scripts/check-shipping.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "blog:generate": "tsx scripts/generate-daily-post.ts",
-    "check:shipping": "tsx scripts/check-shipping.ts"
+    "check:shipping": "tsx scripts/check-shipping.ts",
+    "check:stripe": "tsx scripts/check-stripe.ts",
+    "check:mail": "tsx scripts/check-mail.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

@@ -3,7 +3,8 @@ import Link from "next/link";
 import type Stripe from "stripe";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import ClearCartOnMount from "@/components/cart/ClearCartOnMount";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, logStripeError } from "@/lib/stripe";
+import { isMailConfigured } from "@/lib/mail";
 import { SHIPPING } from "@/data/shipping";
 import { siteConfig } from "@/data/siteConfig";
 import { formatPrice } from "@/lib/utils";
@@ -48,6 +49,8 @@ export default async function OrderCompletePage({
 }) {
   const { session_id: sessionId } = await searchParams;
   const stripe = getStripe();
+  // メール送信が設定されていないうちは「メールを送りました」と書かない
+  const mailEnabled = isMailConfigured();
 
   let session: Stripe.Checkout.Session | null = null;
   let lineItems: Stripe.LineItem[] = [];
@@ -60,7 +63,8 @@ export default async function OrderCompletePage({
       lineItems = session.line_items?.data ?? [];
     } catch (error) {
       // 存在しないIDや期限切れ。お客様には一般的な案内を出す
-      console.error("[order/complete] セッションを取得できませんでした:", error);
+      // ログに残すのは type / code / message / requestId のみ
+      logStripeError("order/complete", error);
       session = null;
     }
   }
@@ -89,7 +93,9 @@ export default async function OrderCompletePage({
             />
             <p className="mt-7 text-[0.95rem] leading-[2.05] text-ink/85">
               ご注文を承りました。
-              ご入力いただいたメールアドレス宛に、確認のメールをお送りしています。
+              {mailEnabled
+                ? "ご入力いただいたメールアドレス宛に、確認のメールをお送りしています。"
+                : "ご注文の内容は、下記のとおりです。この画面を控えとしてお使いください。"}
             </p>
           </header>
 
@@ -160,10 +166,15 @@ export default async function OrderCompletePage({
             </h2>
             <ol className="mt-6 divide-y divide-ink/12 border-y border-ink/12">
               {[
-                {
-                  title: "確認メールをご確認ください",
-                  body: "ご入力いただいたメールアドレス宛に、ご注文内容の確認メールが届きます。届かない場合は、迷惑メールフォルダもご確認ください。",
-                },
+                mailEnabled
+                  ? {
+                      title: "確認メールをご確認ください",
+                      body: "ご入力いただいたメールアドレス宛に、ご注文内容の確認メールが届きます。届かない場合は、迷惑メールフォルダもご確認ください。",
+                    }
+                  : {
+                      title: "この画面を控えとしてお使いください",
+                      body: "ご注文番号と内容は、この画面でご確認いただけます。ご不明な点は、お電話またはお問い合わせよりご連絡ください。",
+                    },
                 {
                   title: "農園から発送します",
                   body: `${SHIPPING.dispatchLead}いたします。${SHIPPING.carrier}でお届けします。${SHIPPING.note}`,
@@ -251,8 +262,8 @@ export default async function OrderCompletePage({
               お手続きの途中だった場合は、カートからもう一度お進みください。
             </p>
             <p className="mt-4 text-[0.9rem] leading-[2] text-moss">
-              すでにお支払いをお済ませの場合は、確認のメールが届いているかご確認ください。
-              ご不明な点は、お手数ですがお問い合わせください。
+              すでにお支払いをお済ませの場合は、お手数ですがお問い合わせください。
+              ご注文の状況をお調べいたします。
             </p>
           </header>
 

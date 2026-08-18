@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, logStripeError } from "@/lib/stripe";
 import { markEventProcessed } from "@/lib/webhook-events";
 import { findRegionByPrefecture } from "@/data/shipping";
+import { sendOrderMails } from "@/lib/order-mail";
 
 /**
  * Stripe Webhook（/api/stripe/webhook）
@@ -95,7 +96,8 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     // ここで500を返すとStripeが再送してくれる
-    console.error("[webhook] 処理中にエラーが発生しました:", error);
+    // ログに残すのは type / code / message / requestId のみ
+    logStripeError("webhook", error);
     return NextResponse.json({ received: false }, { status: 500 });
   }
 
@@ -107,10 +109,14 @@ export async function POST(request: Request) {
  *
  * ★ここが注文確定の正式な地点★
  *
- * いまはログ出力までを行っている。
- * 注文の保存・メール通知・在庫の引き当てを追加するときは、
- * この関数の中に書くこと（そのときは webhook-events.ts の
- * メモリ上の重複判定を、保存先での判定に置き換える）。
+ * ここでやっていること
+ *   1. 注文内容をサーバーログに残す（個人情報は書かない）
+ *   2. 農園へ発送用の通知メールを送る
+ *   3. お客様へご注文の控えメールを送る
+ *
+ * 在庫の引き当てや注文の保存を足すときも、この関数の中に書くこと
+ * （そのときは webhook-events.ts のメモリ上の重複判定を、
+ *   保存先での判定に置き換える）。
  */
 async function handlePaidSession(
   stripe: Stripe,
@@ -123,13 +129,18 @@ async function handlePaidSession(
     return;
   }
 
-  // 明細はセッションに含まれないので取り直す
-  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
-    limit: 100,
+  // イベントに含まれるセッションはお届け先が省略されることがあるため、
+  // メールに使う情報は取り直した内容を正とする
+  const full = await stripe.checkout.sessions.retrieve(session.id, {
+    expand: ["line_items"],
   });
+  const lineItems =
+    full.line_items?.data ??
+    (await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 }))
+      .data;
 
-  const orderNo = session.id.slice(-8).toUpperCase();
-  const items = lineItems.data
+  const orderNo = full.id.slice(-8).toUpperCase();
+  const items = lineItems
     .map((item) => `${item.description}×${item.quantity ?? 1}`)
     .join(" / ");
 
@@ -138,14 +149,19 @@ async function handlePaidSession(
   console.log(`[webhook] 注文が確定しました`);
   console.log(`  注文番号   : ${orderNo}`);
   console.log(`  商品       : ${items}`);
-  console.log(`  送料       : ${session.total_details?.amount_shipping ?? 0} 円`);
-  console.log(`  合計       : ${session.amount_total ?? 0} 円`);
+  console.log(`  個口数     : ${full.metadata?.parcels ?? "-"}`);
+  console.log(`  送料       : ${full.total_details?.amount_shipping ?? 0} 円`);
+  console.log(`  合計       : ${full.amount_total ?? 0} 円`);
   console.log("──────────────────────────────────────────");
 
   // 地域別送料を使っている場合、お客様が選んだ地域と
   // 実際のお届け先が食い違っていないかを確認する。
   // （Stripeは住所から送料を自動選択しないため）
-  warnIfShippingRegionMismatch(session);
+  warnIfShippingRegionMismatch(full);
+
+  // メールの失敗で例外を投げない。
+  // ここで500を返すとStripeが再送し、同じ注文が何度も処理されてしまう。
+  await sendOrderMails(full, lineItems);
 }
 
 /** 選ばれた送料の地域と、お届け先の都道府県がずれていたら警告する */
