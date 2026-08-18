@@ -2,7 +2,11 @@ import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
 import { checkoutConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
-import { RATE_TABLE, SHIPPING as shippingConfig } from "@/data/shipping";
+import {
+  PACKING_EXAMPLES,
+  RATE_TABLE,
+  SHIPPING as shippingConfig,
+} from "@/data/shipping";
 import { buildMetadata } from "@/lib/metadata";
 import { formatPrice } from "@/lib/utils";
 
@@ -104,6 +108,9 @@ export default function ShippingPage() {
               {shippingConfig.policy}
             </p>
             <p className="mt-4 text-[0.93rem] leading-[2.05] text-ink/85">
+              {shippingConfig.packing}
+            </p>
+            <p className="mt-4 text-[0.93rem] leading-[2.05] text-ink/85">
               送料はお届け先の地域によって変わります。
               下表は<strong className="font-medium">1個口あたり</strong>の金額です。
               ご購入手続きの画面でお届け先をご入力いただくと、
@@ -165,19 +172,28 @@ export default function ShippingPage() {
               運賃が改定された場合は、こちらの表も更新します。
             </p>
 
-            {/* 個口数の考え方を具体例で示す */}
+            {/* 個口数の考え方を具体例で示す。PACKING_EXAMPLES が唯一の出どころ */}
             <div className="mt-8 border border-ink/12 bg-paper-warm px-6 py-6">
               <p className="font-mincho text-[1rem] text-forest">
-                送料の計算例
+                何個口になるか
               </p>
-              <p className="mt-3 text-[0.88rem] leading-[1.95] text-ink/80">
-                生ライチ 500g を2点、350g を1点ご注文の場合は
-                <strong className="mx-1 font-medium">3個口</strong>
-                となり、上表の金額の3倍が送料になります。
-              </p>
-              <p className="mt-2 text-[0.83rem] leading-[1.9] text-moss">
-                商品は1点ずつ別の箱でお送りするため、まとめ買いでも
-                個口数分の送料がかかります。あらかじめご了承ください。
+              <dl className="mt-4 divide-y divide-ink/10 text-[0.88rem]">
+                {PACKING_EXAMPLES.map((example) => (
+                  <div
+                    key={example.order}
+                    className="flex items-baseline justify-between gap-4 py-2.5"
+                  >
+                    <dt className="text-ink/80">{example.order}</dt>
+                    <dd className="tnum shrink-0 text-forest">
+                      {example.parcels}個口
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-4 text-[0.83rem] leading-[1.9] text-moss">
+                商品点数ではなく個口数の分だけ送料がかかります。
+                たとえば関東へ2個口でお送りする場合の送料は、
+                上表の金額の2倍です。
               </p>
             </div>
           </div>

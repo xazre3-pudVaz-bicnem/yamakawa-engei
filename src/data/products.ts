@@ -88,6 +88,15 @@ export type Product = {
 
   /** 内容量（例: "500g"）。未確認なら null */
   volume: string | null;
+  /**
+   * 梱包の計算に使う重量（g）。
+   *
+   * 何個口で発送するかは、この重量と
+   * src/data/shipping.ts の1個口あたりの上限重量で決まる。
+   * 未確認のまま販売すると送料を計算できないため、
+   * null の商品はカートに入れられない（lib/order.ts が弾く）。
+   */
+  weightGrams: number | null;
   /** 個数の目安（例: "約12〜13粒"）。未確認なら null */
   countGuide: string | null;
 
@@ -205,6 +214,8 @@ export const products: Product[] = [
     priceNote: "表示価格は税込です。送料は別途かかります。",
 
     volume: "500g", // [公式]
+    // [確認済] 梱包条件（1個口に何点入るか）はこの重量を基準に伺っている
+    weightGrams: 500,
     countGuide: "約12〜13粒", // [公式]
 
     // ★販売状況はここで切り替える★
@@ -308,6 +319,8 @@ export const products: Product[] = [
     priceNote: "表示価格は税込です。送料は別途かかります。",
 
     volume: "350g",
+    // [確認済] 梱包条件（1個口に何点入るか）はこの重量を基準に伺っている
+    weightGrams: 350,
     // [TODO] 個数の目安が分かれば入れる（500gは約12〜13粒）。
     // 推測では書かないため、確認が取れるまで空にしている。
     countGuide: null,

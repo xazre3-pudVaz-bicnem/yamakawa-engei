@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import QuantityStepper from "./QuantityStepper";
 import Photo from "@/components/ui/Photo";
-import { SHIPPING, isShippingConfigured } from "@/data/shipping";
+import { SHIPPING, isShippingConfigured, planParcels } from "@/data/shipping";
 import { formatPrice } from "@/lib/utils";
 
 /**
@@ -12,6 +12,10 @@ import { formatPrice } from "@/lib/utils";
  *
  * 送料はご購入手続きの画面（Stripe）でお届け先に応じて加算される。
  * ここでは商品の小計までを見せ、架空の送料を足さない。
+ *
+ * 個口数はお届け先に関係なく決まるので、ここでもお知らせする。
+ * ただしこの計算は表示のためだけのもので、
+ * 請求される送料はサーバー側で計算し直した値になる。
  */
 export default function CartContents() {
   const { lines, subtotal, isReady, setQuantity, remove, totalQuantity } =
@@ -47,6 +51,15 @@ export default function CartContents() {
   }
 
   const shippingKnown = isShippingConfigured;
+
+  // 表示専用。請求額はサーバー側で計算し直す
+  const plan = planParcels(
+    lines.map(({ product, quantity }) => ({
+      name: product.name,
+      weightGrams: product.weightGrams,
+      quantity,
+    })),
+  );
 
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_20rem] lg:items-start lg:gap-16">
@@ -136,6 +149,12 @@ export default function CartContents() {
               {formatPrice(subtotal) ?? "—"}
             </dd>
           </div>
+          {plan.ok ? (
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-moss">個口数</dt>
+              <dd className="tnum">{plan.parcels}個口</dd>
+            </div>
+          ) : null}
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-moss">送料</dt>
             <dd className="text-right text-[0.85rem]">
@@ -155,7 +174,10 @@ export default function CartContents() {
               ここで架空の合計を出さない */}
           <p className="mt-3 text-[0.78rem] leading-[1.85] text-moss">
             送料は次のご購入手続きの画面で、お届け先を入力すると自動で計算されます。
-            {SHIPPING.carrier}で、商品1点につき1個口でお送りします。
+            {SHIPPING.carrier}でお送りします。
+            {plan.ok
+              ? `ご注文の内容は${plan.parcels}個口となり、${plan.parcels}個口分の送料がかかります。`
+              : "1個口にまとめられる分はまとめてお送りします。"}
           </p>
           <p className="mt-2">
             <Link

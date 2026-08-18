@@ -1,4 +1,5 @@
 import { getProduct, isBuyable, type Product } from "@/data/products";
+import type { ShippingLine } from "@/data/shipping";
 
 /**
  * 注文内容の検証
@@ -87,6 +88,16 @@ export function validateOrder(input: unknown): ValidationResult {
       };
     }
 
+    // 重量が無いと個口数＝送料を計算できない。
+    // 架空の送料で受け付けるくらいなら、ここで止める。
+    if (product.weightGrams === null) {
+      return {
+        ok: false,
+        status: 409,
+        message: `「${product.name}」はただいまオンラインでのご注文を承れません。お手数ですが、お問い合わせよりご連絡ください。`,
+      };
+    }
+
     // 数量の検証。小数・負数・0・NaN・文字列をすべて弾く
     const quantity = Number(raw?.quantity);
     if (
@@ -145,4 +156,57 @@ export function validateOrder(input: unknown): ValidationResult {
   }
 
   return { ok: true, lines, subtotal };
+}
+
+/**
+ * 検証済みの注文を、送料計算に渡せる形にする。
+ *
+ * 重量はサーバー側の商品データ（products.ts）から取る。
+ * ブラウザから送られてきた重量・個口数は使わない。
+ */
+export function toShippingLines(lines: ValidatedLine[]): ShippingLine[] {
+  return lines.map((line) => ({
+    name: line.product.name,
+    weightGrams: line.product.weightGrams,
+    quantity: line.quantity,
+  }));
+}
+
+/**
+ * Checkout Session の metadata に入れる注文内容の文字列。
+ * 「slug:数量」をカンマでつないだ形（slugにコロンとカンマは使わない）。
+ * 送料を計算し直すときに、この文字列から商品データを引き直す。
+ */
+export function encodeOrderItems(lines: ValidatedLine[]): string {
+  return lines
+    .map((line) => `${line.product.slug}:${line.quantity}`)
+    .join(",");
+}
+
+/**
+ * encodeOrderItems で作った文字列を、送料計算に渡せる形に戻す。
+ * 商品名と重量は、必ずサーバー側の商品データから引き直す。
+ * 読み取れない値が1つでもあれば null を返す（推測で補わない）。
+ */
+export function decodeOrderItems(raw: string | undefined | null): ShippingLine[] | null {
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+
+  const lines: ShippingLine[] = [];
+
+  for (const part of raw.split(",")) {
+    const [slug, rawQuantity] = part.split(":");
+    const product = getProduct((slug ?? "").trim());
+    if (!product) return null;
+
+    const quantity = Number(rawQuantity);
+    if (!Number.isInteger(quantity) || quantity < 1) return null;
+
+    lines.push({
+      name: product.name,
+      weightGrams: product.weightGrams,
+      quantity,
+    });
+  }
+
+  return lines.length > 0 ? lines : null;
 }

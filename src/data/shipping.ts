@@ -5,14 +5,18 @@
  * 山川園芸の配送条件（確認済）
  * ─────────────────────────────────────────────
  * ・350g・500g とも、すべて60サイズで発送する
- * ・商品1点につき1個口。複数購入の場合も1点ごとに1個口
  * ・すべてクロネコヤマトのクール宅急便
  * ・発送元は鹿児島県指宿市（ヤマトの地帯区分では「九州」発）
+ * ・1個口にまとめられる分はまとめて発送する
+ *   （商品点数＝個口数ではない。下の「梱包」の節を参照）
  *
  * したがって送料は次の式で決まる。
  *
  *   （九州発・60サイズの宅急便運賃 ＋ クール宅急便60サイズの追加料金）
- *   × カート内の商品総数量
+ *   × 必要な個口数
+ *
+ * ★商品点数ではなく個口数を掛ける★
+ *   例: 500g×1 ＋ 350g×2 は商品3点だが1個口なので、送料は1個口分。
  *
  * ─────────────────────────────────────────────
  * 料金が改定されたとき
@@ -25,6 +29,8 @@
  *   宅急便運賃一覧表  https://www.kuronekoyamato.co.jp/ytc/search/estimate/ichiran.html
  *   クール宅急便      https://www.kuronekoyamato.co.jp/ytc/customer/send/services/cool/
  */
+
+import { packItems, type PackedParcel, type PackItem } from "@/lib/packing";
 
 /* ================================================================
    地域区分（ヤマト運輸の地帯区分）と47都道府県の対応
@@ -160,12 +166,10 @@ const YAMATO_60_FROM_KYUSHU: Record<RegionId, number> = {
  */
 const COOL_SURCHARGE_60 = 275;
 
-/** 荷姿。商品1点につき1個口 */
+/** 荷姿 */
 export const PARCEL = {
   size: "60サイズ",
   service: "クロネコヤマト クール宅急便",
-  /** 商品1点あたりの個口数 */
-  parcelsPerItem: 1,
 } as const;
 
 /** 1個口あたりの送料（税込）。宅急便運賃＋クール料金 */
@@ -180,6 +184,188 @@ export const RATE_TABLE = REGIONS.map((region) => ({
   cool: COOL_SURCHARGE_60,
   total: ratePerParcel(region.id),
 }));
+
+/* ================================================================
+   梱包（何個口になるか）
+================================================================ */
+
+/**
+ * 山川園芸から伺った梱包条件 [確認済]
+ *
+ *   350gの商品は、同じ商品3個まで1個口
+ *   500gの商品は、同じ商品2個まで1個口
+ *   500g×2 ＋ 350g×1 → 2個口
+ *   500g×1 ＋ 350g×2 → 1個口
+ *
+ * この表は「事実の記録」であって、計算には直接使わない。
+ * 下の PARCEL_CAPACITY_GRAMS による計算がこの表をすべて再現できるかを
+ * 起動時に検証し、1件でも合わなければ決済を止める
+ * （isPackingModelConsistent → canCheckout）。
+ *
+ * 新しい条件を伺ったら、ここに1行足すこと。
+ * 計算と食い違えば、その場で気づける。
+ */
+export type ConfirmedPacking = {
+  composition: Array<{ weightGrams: number; quantity: number }>;
+  parcels: number;
+};
+
+export const CONFIRMED_PACKINGS: ConfirmedPacking[] = [
+  { composition: [{ weightGrams: 350, quantity: 1 }], parcels: 1 },
+  { composition: [{ weightGrams: 350, quantity: 2 }], parcels: 1 },
+  { composition: [{ weightGrams: 350, quantity: 3 }], parcels: 1 },
+  { composition: [{ weightGrams: 500, quantity: 1 }], parcels: 1 },
+  { composition: [{ weightGrams: 500, quantity: 2 }], parcels: 1 },
+  {
+    composition: [
+      { weightGrams: 500, quantity: 2 },
+      { weightGrams: 350, quantity: 1 },
+    ],
+    parcels: 2,
+  },
+  {
+    composition: [
+      { weightGrams: 500, quantity: 1 },
+      { weightGrams: 350, quantity: 2 },
+    ],
+    parcels: 1,
+  },
+];
+
+/**
+ * 1個口に入れられる商品重量の上限（g）
+ *
+ * ★山川園芸への正式確認はまだ取れていない★ [TODO]
+ *
+ * ただし、思いつきの数字ではない。
+ * 上の CONFIRMED_PACKINGS から、上限は次の範囲に挟まれる。
+ *
+ *   500g×1 ＋ 350g×2 ＝ 1,200g が1個口  → 上限は 1,200g 以上
+ *   500g×2 ＋ 350g×1 ＝ 1,350g が2個口  → 上限は 1,350g 未満
+ *
+ * そして 350g・500g をどう組み合わせても、
+ * 1,200g より重く 1,350g より軽い重量は作れない。
+ * つまり、この範囲のどの値を使っても個口数は変わらない。
+ * その検証は scripts/check-shipping.ts が毎回（ビルド前にも）行っている。
+ *
+ * 正式に上限が確認できたら
+ *   1. この値を確認できた数値に置き換える
+ *   2. CAPACITY_CONFIRMED を true にする
+ *   3. npm run check:shipping を流して個口数が変わらないか確かめる
+ * 範囲の外の値だった場合は個口数が変わるので、必ず3を行うこと。
+ */
+export const PARCEL_CAPACITY_GRAMS = 1200;
+
+/** 上限重量の正式確認が取れているか [TODO] 山川園芸に確認 */
+export const CAPACITY_CONFIRMED = false;
+
+/**
+ * 確認済みの条件から導かれる上限重量の範囲。
+ * scripts/check-shipping.ts が、この範囲の値ならどれを使っても
+ * 個口数が変わらないことを検証している。
+ */
+export const CAPACITY_RANGE = { min: 1200, maxExclusive: 1350 } as const;
+
+/**
+ * 計算モデルが、確認済みの梱包条件をすべて再現できているか。
+ * 1件でも食い違えば false になり、決済が止まる。
+ */
+export const isPackingModelConsistent: boolean = CONFIRMED_PACKINGS.every(
+  (confirmed) => {
+    const items: PackItem[] = confirmed.composition.flatMap(
+      ({ weightGrams, quantity }) =>
+        Array.from({ length: quantity }, () => ({
+          label: `${weightGrams}g`,
+          weightGrams,
+        })),
+    );
+    const packed = packItems(items, PARCEL_CAPACITY_GRAMS);
+    return packed.ok && packed.count === confirmed.parcels;
+  },
+);
+
+/** 個口数を計算するための入力。価格は使わない */
+export type ShippingLine = {
+  /** 内訳の表示に使う商品名 */
+  name: string;
+  /** 商品1点の重量（g）。null なら計算できない */
+  weightGrams: number | null;
+  quantity: number;
+};
+
+export type ParcelPlan =
+  | {
+      ok: true;
+      /** 必要な個口数 */
+      parcels: number;
+      /** 商品の総重量（g） */
+      totalWeightGrams: number;
+      /** 個口ごとの内訳 */
+      breakdown: PackedParcel[];
+    }
+  | { ok: false; reason: string };
+
+/**
+ * カートの中身から、必要な個口数を計算する。
+ *
+ * ★送料に使うときは必ずサーバー側で呼ぶこと★
+ * 画面表示のために同じ関数をブラウザ側でも使うが、
+ * その結果は表示専用で、請求額には一切使わない。
+ */
+export function planParcels(lines: ShippingLine[]): ParcelPlan {
+  if (!isPackingModelConsistent) {
+    return {
+      ok: false,
+      reason:
+        "ただいま配送の設定を確認しております。お手数ですが、お問い合わせよりご注文ください。",
+    };
+  }
+
+  const items: PackItem[] = [];
+
+  for (const line of lines) {
+    if (!Number.isInteger(line.quantity) || line.quantity < 1) {
+      return { ok: false, reason: "ご注文の数量を確認できませんでした。" };
+    }
+    if (line.weightGrams === null || !Number.isFinite(line.weightGrams)) {
+      return {
+        ok: false,
+        reason: `「${line.name}」の配送方法を確認しております。お手数ですが、お問い合わせよりご注文ください。`,
+      };
+    }
+    for (let i = 0; i < line.quantity; i++) {
+      items.push({ label: line.name, weightGrams: line.weightGrams });
+    }
+  }
+
+  const packed = packItems(items, PARCEL_CAPACITY_GRAMS);
+
+  if (!packed.ok) {
+    switch (packed.reason) {
+      case "empty":
+        return { ok: false, reason: "カートに商品が入っていません。" };
+      case "too-many":
+        return {
+          ok: false,
+          reason:
+            "ご注文の点数が多いため、この画面ではお受けできません。お手数ですが、お問い合わせよりご相談ください。",
+        };
+      default:
+        return {
+          ok: false,
+          reason:
+            "配送方法を確認できませんでした。お手数ですが、お問い合わせよりご相談ください。",
+        };
+    }
+  }
+
+  return {
+    ok: true,
+    parcels: packed.count,
+    totalWeightGrams: packed.totalWeightGrams,
+    breakdown: packed.parcels,
+  };
+}
 
 /* ================================================================
    クール宅急便を取り扱えない地域
@@ -246,11 +432,15 @@ export type ShippingQuote =
   | {
       ok: true;
       region: Region;
-      /** 個口数（＝商品の総数量） */
+      /** 必要な個口数（商品点数ではない） */
       parcels: number;
+      /** 商品の総重量（g） */
+      totalWeightGrams: number;
+      /** 個口ごとの内訳 */
+      breakdown: PackedParcel[];
       /** 1個口あたりの送料（税込） */
       unitRate: number;
-      /** 送料の合計（税込） */
+      /** 送料の合計（税込）＝ 1個口あたり × 個口数 */
       amount: number;
       /** Stripeの決済画面に出す名前 */
       label: string;
@@ -261,19 +451,21 @@ export type ShippingQuote =
  * 送料を計算する。
  *
  * ★必ずサーバー側でだけ呼ぶこと★
- * クライアントから送られてきた送料額は一切信用しない。
+ * クライアントから送られてきた送料額・個口数は一切信用しない。
+ * 個口数はここで、商品の重量から計算し直す。
  *
  * @param prefecture お届け先の都道府県（Stripeが収集した住所の state）
- * @param totalQuantity カート内の商品の総数量（＝個口数）
+ * @param lines カートの中身（商品名・1点あたりの重量・数量）
  * @param addressParts 市区町村・番地など。離島の判定に使う
  */
 export function quoteShipping(
   prefecture: string | null | undefined,
-  totalQuantity: number,
+  lines: ShippingLine[],
   addressParts: Array<string | null | undefined> = [],
 ): ShippingQuote {
-  if (!Number.isInteger(totalQuantity) || totalQuantity < 1) {
-    return { ok: false, reason: "ご注文の数量を確認できませんでした。" };
+  const plan = planParcels(lines);
+  if (!plan.ok) {
+    return { ok: false, reason: plan.reason };
   }
 
   const unavailable = findUnavailableArea([prefecture, ...addressParts]);
@@ -294,13 +486,16 @@ export function quoteShipping(
   }
 
   const unitRate = ratePerParcel(region.id);
-  const parcels = totalQuantity * PARCEL.parcelsPerItem;
+  const parcels = plan.parcels;
 
   return {
     ok: true,
     region,
     parcels,
+    totalWeightGrams: plan.totalWeightGrams,
+    breakdown: plan.breakdown,
     unitRate,
+    // ★商品点数ではなく個口数を掛ける★
     amount: unitRate * parcels,
     label:
       parcels === 1
@@ -334,8 +529,23 @@ export const SHIPPING = {
 
   /** 送料の考え方（画面に出す説明） */
   policy:
-    "すべて60サイズのクール宅急便でお送りします。商品1点につき1個口のため、2点ご注文の場合は2個口分の送料がかかります。",
+    "すべて60サイズのクール宅急便でお送りします。1個口にまとめられる分はまとめてお送りし、送料は個口数の分だけいただきます。",
+
+  /**
+   * 梱包のご案内（画面に出す説明）
+   * 数字は CONFIRMED_PACKINGS と合わせること。
+   */
+  packing:
+    "1個口に入るのは、350gなら3点まで、500gなら2点までが目安です。500g×1点と350g×2点のように、組み合わせても1個口に収まる場合があります。入りきらない分は個口数が増え、その分の送料がかかります。",
 };
+
+/** 梱包の説明に使う例（画面表示用。CONFIRMED_PACKINGS と同じ内容） */
+export const PACKING_EXAMPLES: Array<{ order: string; parcels: number }> = [
+  { order: "350g × 3点", parcels: 1 },
+  { order: "500g × 2点", parcels: 1 },
+  { order: "500g × 1点 ＋ 350g × 2点", parcels: 1 },
+  { order: "500g × 2点 ＋ 350g × 1点", parcels: 2 },
+];
 
 /**
  * 送料の金額を画面に出せる状態か。
@@ -346,10 +556,17 @@ export const isShippingConfigured: boolean =
   PREFECTURE_COUNT === 47 &&
   REGIONS.every((region) => Number.isFinite(YAMATO_60_FROM_KYUSHU[region.id]));
 
-/** 決済に進んでよいか */
-export const canCheckout: boolean = isShippingConfigured;
+/**
+ * 決済に進んでよいか。
+ * 料金表がそろっていて、かつ梱包の計算が
+ * 確認済みの条件をすべて再現できているときだけ true。
+ */
+export const canCheckout: boolean =
+  isShippingConfigured && isPackingModelConsistent;
 
 /** 送料を出せない理由（管理者向けのログ用） */
 export const shippingBlockReason: string | null = canCheckout
   ? null
-  : "src/data/shipping.ts の料金表または都道府県の対応表に漏れがあります。";
+  : !isShippingConfigured
+    ? "src/data/shipping.ts の料金表または都道府県の対応表に漏れがあります。"
+    : "src/data/shipping.ts の梱包の計算が CONFIRMED_PACKINGS を再現できていません。PARCEL_CAPACITY_GRAMS を確認してください。";
