@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, logStripeError } from "@/lib/stripe";
 import { PARCEL, quoteShipping } from "@/data/shipping";
+import { decodeOrderItems } from "@/lib/order";
 
 /**
  * お届け先の住所から送料を計算して、Checkout Session を更新する
@@ -15,8 +16,9 @@ import { PARCEL, quoteShipping } from "@/data/shipping";
  * ここで守っていること
  * ─────────────────────────────────────────────
  * ・送料はサーバー側で計算する。ブラウザから送られた金額は受け取らない
- * ・個口数は Checkout Session に保存した数量から取る。
- *   ブラウザから送られた数量も信用しない
+ * ・個口数もサーバー側で計算し直す。
+ *   Checkout Session に保存した「商品のslugと数量」から商品データを引き直し、
+ *   重量をもとに詰め直す。ブラウザから送られた個口数・数量は信用しない
  * ・支払い済み・期限切れのセッションは更新しない
  * ・クール便を扱えない住所は、その場でお断りする
  *
@@ -47,7 +49,7 @@ const GENERIC_ERROR =
 export async function POST(request: Request) {
   const stripe = getStripe();
   if (!stripe) {
-    console.error("[shipping] STRIPE_SECRET_KEY が設定されていません。");
+    // 原因は getStripe() 側がサーバーログに残している
     return NextResponse.json({ type: "error", message: GENERIC_ERROR });
   }
 
@@ -91,18 +93,19 @@ export async function POST(request: Request) {
       });
     }
 
-    /* ---- 2. 個口数はセッションの metadata から取る ---- */
-    // ブラウザから送られた数量は使わない
-    const totalQuantity = Number(session.metadata?.totalQuantity);
-    if (!Number.isInteger(totalQuantity) || totalQuantity < 1) {
+    /* ---- 2. 注文内容はセッションの metadata から取り直す ---- */
+    // ブラウザから送られた数量・個口数は使わない。
+    // slugと数量だけを取り出し、重量は商品データから引き直す。
+    const lines = decodeOrderItems(session.metadata?.items);
+    if (!lines) {
       console.error(
-        `[shipping] 数量を取得できませんでした: session=${sessionId.slice(-8)}`,
+        `[shipping] 注文内容を取得できませんでした: session=${sessionId.slice(-8)}`,
       );
       return NextResponse.json({ type: "error", message: GENERIC_ERROR });
     }
 
-    /* ---- 3. 送料を計算する ---- */
-    const quote = quoteShipping(address?.state, totalQuantity, [
+    /* ---- 3. 個口数と送料を計算する ---- */
+    const quote = quoteShipping(address?.state, lines, [
       address?.city,
       address?.line1,
       address?.line2,
@@ -138,6 +141,7 @@ export async function POST(request: Request) {
               regionId: quote.region.id,
               parcels: String(quote.parcels),
               unitRate: String(quote.unitRate),
+              totalWeightGrams: String(quote.totalWeightGrams),
               size: PARCEL.size,
             },
           },
@@ -147,8 +151,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ type: "object", value: { succeeded: true } });
   } catch (error) {
-    // 内部エラーはログにだけ残す
-    console.error("[shipping] 送料の更新に失敗しました:", error);
+    // ログに残すのは type / code / message / requestId のみ
+    logStripeError("shipping", error);
     return NextResponse.json({ type: "error", message: GENERIC_ERROR });
   }
 }

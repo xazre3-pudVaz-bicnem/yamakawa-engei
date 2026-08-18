@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe } from "@/lib/stripe";
-import { validateOrder } from "@/lib/order";
-import { canCheckout, shippingBlockReason } from "@/data/shipping";
+import { getStripe, logStripeError } from "@/lib/stripe";
+import { encodeOrderItems, toShippingLines, validateOrder } from "@/lib/order";
+import { canCheckout, planParcels, shippingBlockReason } from "@/data/shipping";
 import { absoluteUrl, siteConfig } from "@/data/siteConfig";
 
 /**
@@ -44,23 +44,25 @@ import { absoluteUrl, siteConfig } from "@/data/siteConfig";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** お客様向けの一般的なエラーメッセージ */
+/** お客様向けの一般的なエラーメッセージ（時間をおけば直る可能性があるもの） */
 const GENERIC_ERROR =
   "ただいま決済のお手続きを開始できませんでした。お手数ですが、時間をおいてもう一度お試しください。";
+
+/**
+ * 設定不備のときのメッセージ。
+ * キーが無効な場合、お客様が何度試しても直らないので
+ * 「もう一度お試しください」とは言わない。
+ */
+const UNAVAILABLE_ERROR =
+  "ただいまオンライン決済をご利用いただけません。お手数ですが、お電話またはお問い合わせよりご注文ください。";
 
 export async function POST(request: Request) {
   /* ---- 1. 決済が使える状態か ---- */
   const stripe = getStripe();
   if (!stripe) {
-    // キーが無いことはお客様に伝えない（内部事情のため）
-    console.error("[checkout] STRIPE_SECRET_KEY が設定されていません。");
-    return NextResponse.json(
-      {
-        message:
-          "ただいまオンライン決済をご利用いただけません。お手数ですが、お電話またはお問い合わせよりご連絡ください。",
-      },
-      { status: 503 },
-    );
+    // キーの不備はお客様に伝えない（内部事情のため）。
+    // 原因は getStripe() 側がサーバーログに残している。
+    return NextResponse.json({ message: UNAVAILABLE_ERROR }, { status: 503 });
   }
 
   /* ---- 2. 送料の料金表がそろっているか ---- */
@@ -114,13 +116,20 @@ export async function POST(request: Request) {
       },
     }));
 
-  /** 個口数の計算に使う。カート内の総数量＝個口数 */
   const totalQuantity = validated.lines.reduce(
     (sum, line) => sum + line.quantity,
     0,
   );
 
-  /* ---- 5. Checkout Session を作成 ---- */
+  /* ---- 5. 個口数をサーバー側で計算しておく ---- */
+  // 個口数は商品の重量だけで決まり、お届け先には左右されない。
+  // ここで一度計算しておき、金額の計算は住所が入ったあとに行う。
+  const plan = planParcels(toShippingLines(validated.lines));
+  if (!plan.ok) {
+    return NextResponse.json({ message: plan.reason }, { status: 409 });
+  }
+
+  /* ---- 6. Checkout Session を作成 ---- */
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -154,11 +163,13 @@ export async function POST(request: Request) {
       return_url: `${absoluteUrl("/order/complete")}?session_id={CHECKOUT_SESSION_ID}`,
 
       // 注文の突き合わせと、送料の再計算に使う。金額は入れない（Stripe側が正）
+      // items から商品データを引き直して個口数を計算するので、
+      // 送料の根拠はブラウザ側に一切置かない。
       metadata: {
-        items: validated.lines
-          .map((line) => `${line.product.slug}x${line.quantity}`)
-          .join(","),
+        items: encodeOrderItems(validated.lines),
         totalQuantity: String(totalQuantity),
+        parcels: String(plan.parcels),
+        totalWeightGrams: String(plan.totalWeightGrams),
       },
 
       payment_intent_data: {
@@ -167,14 +178,24 @@ export async function POST(request: Request) {
     });
 
     if (!session.client_secret) {
-      console.error("[checkout] client_secret が返りませんでした。");
+      console.error(
+        `[checkout] client_secret が返りませんでした。ui_mode=${session.ui_mode}`,
+      );
       return NextResponse.json({ message: GENERIC_ERROR }, { status: 502 });
     }
 
     return NextResponse.json({ clientSecret: session.client_secret });
   } catch (error) {
-    // 内部エラーはサーバーログにのみ残す。お客様には一般的な案内を返す。
-    console.error("[checkout] Checkout Session の作成に失敗しました:", error);
+    // ログに残すのは type / code / message / requestId のみ。
+    // キーの値やお客様の情報は出さない。
+    const info = logStripeError("checkout", error);
+
+    // キーが拒否された（401）ときは、待っても直らない。
+    // 「時間をおいてもう一度」と案内せず、電話・問い合わせへ誘導する。
+    if (info.isAuthError) {
+      return NextResponse.json({ message: UNAVAILABLE_ERROR }, { status: 503 });
+    }
+
     return NextResponse.json({ message: GENERIC_ERROR }, { status: 502 });
   }
 }
