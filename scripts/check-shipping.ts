@@ -30,6 +30,7 @@ import {
   validateOrder,
 } from "../src/lib/order";
 import { getProduct } from "../src/data/products";
+import { isPurchasable } from "../src/data/siteConfig";
 
 let failed = 0;
 
@@ -171,8 +172,10 @@ console.log("\n■ 上限重量の不確かさ（1,200g以上1,350g未満）の�
    ---------------------------------------------------------------
    商品重量・必要個口数・送料・Stripeへ渡す送料 が一致するかを見る。
    「Stripeへ渡す送料」は、実際のAPIと同じ経路
-   （注文の検証 → metadataに保存 → metadataから復元 → 送料計算）
-   をたどって求めている。
+   （metadataに保存 → metadataから復元 → 送料計算）をたどって求めている。
+   送料の計算は販売中かどうかとは関係なく成り立つべきものなので、
+   在庫の関門（validateOrder）は通していない。
+   売り切れの商品を注文できないことは、別の節で確かめている。
 ================================================================ */
 console.log("\n■ ご指定の組み合わせ（お届け先＝東京都）");
 
@@ -262,23 +265,21 @@ for (const combo of COMBOS) {
   const plan = planParcels(lines);
 
   /* --- (b) 実際のAPIと同じ経路 --- */
-  // 1. ブラウザから届いた注文を検証する（価格・重量はサーバー側の値になる）
-  const validated = validateOrder({ lines: combo.order });
-  if (!validated.ok) {
-    console.log(`  NG  ${combo.label}: 注文の検証に失敗（${validated.message}）`);
-    failed++;
-    continue;
-  }
-  // 2. Checkout Session の metadata に入れる文字列にする
-  const metadata = encodeOrderItems(validated.lines);
-  // 3. 送料計算のときに metadata から復元する（ブラウザの値は使わない）
+  // 1. Checkout Session の metadata に入れる文字列にする
+  const metadata = encodeOrderItems(
+    combo.order.map(({ slug, quantity }) => {
+      const product = getProduct(slug)!;
+      return { product, quantity, lineTotal: (product.price ?? 0) * quantity };
+    }),
+  );
+  // 2. 送料計算のときに metadata から復元する（ブラウザの値は使わない）
   const restored = decodeOrderItems(metadata);
   if (!restored) {
     console.log(`  NG  ${combo.label}: metadata を復元できない（${metadata}）`);
     failed++;
     continue;
   }
-  // 4. Stripeへ渡す送料
+  // 3. Stripeへ渡す送料
   const quote = quoteShipping(PREF, restored, ["渋谷区", "神南1-1-1"]);
 
   if (!plan.ok || !quote.ok) {
@@ -462,40 +463,45 @@ for (const raw of [
    価格・重量・個口数・送料をリクエストに混ぜても、
    結果が変わらないことを確かめる。
 ================================================================ */
+console.log("\n■ 販売状況の反映");
+{
+  // 販売終了中は、たとえリクエストを直接叩かれても注文を通さない
+  const order = validateOrder({ lines: [{ slug: SLUG_500, quantity: 1 }] });
+  const selling = isPurchasable;
+
+  if (selling) {
+    const ok = order.ok;
+    if (!ok) failed++;
+    console.log(
+      `  ${ok ? "OK " : "NG "} 販売中のため注文を受け付ける → ${order.ok ? "受付" : order.message}`,
+    );
+  } else {
+    const ok = !order.ok;
+    if (!ok) failed++;
+    console.log(
+      `  ${ok ? "OK " : "NG "} 販売終了中のため注文を受け付けない → ${order.ok ? "通ってしまった" : order.message}`,
+    );
+  }
+}
+
 console.log("\n■ ブラウザから送られた値を無視しているか");
 {
-  // 重量1g・価格1円・個口数1・送料0円 を送りつけた注文
-  const tampered = validateOrder({
-    lines: [
-      {
-        slug: SLUG_500,
-        quantity: 3,
-        weightGrams: 1,
-        price: 1,
-        lineTotal: 1,
-      },
-      { slug: SLUG_350, quantity: 1, weightGrams: 1, price: 1 },
-    ],
-    parcels: 1,
-    shipping: 0,
-    shippingAmount: 0,
-  });
+  // ブラウザが重量1g・価格1円・個口数1・送料0円と申告してきても、
+  // metadata に入るのは slug と数量だけなので、復元した時点で申告値は残らない。
+  const restored = decodeOrderItems(`${SLUG_500}:3,${SLUG_350}:1`)!;
+  const quote = quoteShipping(PREF, restored);
 
-  if (!tampered.ok) {
-    console.log(`  NG  注文の検証に失敗しました（${tampered.message}）`);
-    failed++;
-  } else {
-    const restored = decodeOrderItems(encodeOrderItems(tampered.lines))!;
-    const quote = quoteShipping(PREF, restored);
+  // 500g×3 ＋ 350g×1 ＝ 1,850g → 2個口
+  check("復元した重量（500g）", restored[0].weightGrams, 500);
+  check("復元した重量（350g）", restored[1].weightGrams, 350);
+  check("総重量", quote.ok && quote.totalWeightGrams, 1850);
+  check("個口数", quote.ok && quote.parcels, 2);
+  check("送料", quote.ok && quote.amount, UNIT_RATE * 2);
 
-    // 500g×3 ＋ 350g×1 ＝ 1,850g → 2個口
-    check("商品の小計", tampered.subtotal, 2500 * 3 + 1800);
-    check("復元した重量（500g）", restored[0].weightGrams, 500);
-    check("復元した重量（350g）", restored[1].weightGrams, 350);
-    check("総重量", quote.ok && quote.totalWeightGrams, 1850);
-    check("個口数", quote.ok && quote.parcels, 2);
-    check("送料", quote.ok && quote.amount, UNIT_RATE * 2);
-  }
+  // 価格もサーバー側の商品データから引く
+  const subtotal =
+    (getProduct(SLUG_500)!.price ?? 0) * 3 + (getProduct(SLUG_350)!.price ?? 0);
+  check("商品の小計", subtotal, 2500 * 3 + 1800);
 }
 
 /* ================================================================

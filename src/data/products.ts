@@ -220,7 +220,7 @@ export const products: Product[] = [
 
     // ★販売状況はここで切り替える★
     // "in_stock" | "preorder" | "sold_out" | "coming_soon" | "draft"
-    availability: "in_stock",
+    availability: "sold_out",
     maxQuantity: 10,
 
     saleStart: null, // [TODO] 今季の販売開始日
@@ -326,7 +326,7 @@ export const products: Product[] = [
     countGuide: null,
 
     // ★販売状況はここで切り替える★
-    availability: "in_stock",
+    availability: "sold_out",
     maxQuantity: 10,
 
     saleStart: null,

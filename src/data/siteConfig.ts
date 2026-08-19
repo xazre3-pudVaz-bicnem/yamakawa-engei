@@ -232,7 +232,7 @@ export const salesStatus = {
    * ★ここを書き換える★
    * "on_sale" | "preorder" | "coming_soon" | "closed"
    */
-  phase: "on_sale" as SalesPhase,
+  phase: "closed" as SalesPhase,
 
   /**
    * [TODO] 今季の販売開始日・終了日が決まったら入力。

@@ -9,6 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { useCart } from "./CartProvider";
 import { siteConfig } from "@/data/siteConfig";
+import { isBuyable } from "@/data/products";
 import { SHIPPING } from "@/data/shipping";
 import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/utils";
@@ -175,6 +176,20 @@ export default function StripeCheckout() {
           商品を見る
         </Link>
       </div>
+    );
+  }
+
+  /* ---- 買えない商品が入っている ---- */
+  // 販売終了後にカートが残っているお客様。
+  // Stripeのセッションを作りにいっても断られるので、その前にご案内する。
+  const unavailable = lines.filter(({ product }) => !isBuyable(product));
+  if (unavailable.length > 0) {
+    return (
+      <ErrorPanel
+        message={`${unavailable
+          .map(({ product }) => product.name)
+          .join("、")}は、ただいまご購入いただけません。お手数ですが、カートから削除してください。`}
+      />
     );
   }
 
