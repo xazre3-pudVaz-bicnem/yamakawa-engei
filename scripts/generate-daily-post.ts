@@ -18,6 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import Anthropic from "@anthropic-ai/sdk";
+import { salesStatus, salesPhaseCopy } from "../src/data/siteConfig";
+import { RATE_TABLE } from "../src/data/shipping";
 
 /* ================================================================
    設定
@@ -49,12 +51,27 @@ const FACTS = [
   "品種を指定しての購入は受けていない。その時期に採れたもののなかから良い状態のものを届けている",
   "商品は「生ライチ 500g（税込2,500円）」と「生ライチ 350g（税込1,800円）」の2種類",
   "配送はヤマト運輸のクール便のみ。お届け地域は離島を除く全国",
-  "送料の金額は公式オンラインショップの各商品ページに掲載している（本サイトには金額表を置いていない）",
+  `送料はお届け先の地域で変わる。60サイズのクール宅急便で、1個口あたり${Math.min(...RATE_TABLE.map((r) => r.total)).toLocaleString("ja-JP")}円〜${Math.max(...RATE_TABLE.map((r) => r.total)).toLocaleString("ja-JP")}円（税込）。地域別の金額は /shipping に掲載している`,
+  "1個口に入るのは350gなら3点まで、500gなら2点までが目安。入りきらない分は個口数が増える",
   "のし・ギフト包装・メッセージカードには対応していない",
   "包装はジッパー付きの袋のほか、店頭販売と同じ包装にも対応している",
   "保存は冷蔵庫で、乾燥を防ぐため袋や容器に入れる。目安は数日から1週間ほど",
   "農園での直売・見学は、事前に連絡があれば対応している",
-] as const;
+];
+
+/**
+ * いまの販売状況。src/data/siteConfig.ts の salesStatus を読んでいるので、
+ * サイトを販売終了に切り替えれば、記事の書き方も自動で変わる。
+ * ここに販売状況を手書きしないこと（サイトとずれる）。
+ */
+const IS_SELLING =
+  salesStatus.phase === "on_sale" || salesStatus.phase === "preorder";
+
+const SALES_FACT = IS_SELLING
+  ? `現在は「${salesPhaseCopy[salesStatus.phase].label}」。オンラインショップで注文できる`
+  : `現在は「${salesPhaseCopy[salesStatus.phase].label}」。いまは注文を受け付けていない。次の収穫は来年の初夏`;
+
+FACTS.push(SALES_FACT);
 
 const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 
@@ -276,8 +293,19 @@ const BANNED = [
   { word: "熨斗", why: "未対応のサービス" },
 ];
 
+/** 販売していない期間だけ追加で禁止する表現 */
+const CLOSED_SEASON_BANNED = [
+  { word: "ご注文いただけます", why: "今季は販売を終了しているため" },
+  { word: "ご購入いただけます", why: "今季は販売を終了しているため" },
+  { word: "お買い求めいただけます", why: "今季は販売を終了しているため" },
+  { word: "販売中です", why: "今季は販売を終了しているため" },
+  { word: "販売しています", why: "今季は販売を終了しているため" },
+  { word: "今すぐご注文", why: "今季は販売を終了しているため" },
+];
+
 function findBanned(text: string): Array<{ word: string; why: string }> {
-  return BANNED.filter((rule) => text.includes(rule.word));
+  const rules = IS_SELLING ? BANNED : [...BANNED, ...CLOSED_SEASON_BANNED];
+  return rules.filter((rule) => text.includes(rule.word));
 }
 
 /* ================================================================
@@ -337,6 +365,13 @@ async function main() {
     "- のし・ギフト包装・メッセージカードに触れること（対応していないため）",
     "- 他の農園や他社を批判すること",
     "- アレルギーや体質の話を断定すること。触れる場合は「気になる方は専門家にご相談ください」と添える",
+    ...(IS_SELLING
+      ? []
+      : [
+          "- いま注文できるかのように書くこと。今季の販売は終了しています。",
+          "  「ご注文いただけます」「お買い求めいただけます」「販売中です」とは書かない",
+          "  商品ページに触れるときは「次の収穫は来年の初夏です」と添える",
+        ]),
     "",
     "【事実の土台（これ以外の事実を作らない）】",
     factList,
