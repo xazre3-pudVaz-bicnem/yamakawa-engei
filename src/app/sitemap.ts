@@ -3,6 +3,7 @@ import { isPublicSite, siteUrl } from "@/data/siteConfig";
 import { visibleProducts } from "@/data/products";
 import { columns } from "@/data/column";
 import { guidePages, guidePath } from "@/data/lycheeGuide";
+import { fruitPath, fruits } from "@/data/fruits";
 import { getBlogCategoriesInUse, getBlogList } from "@/lib/blog";
 
 type Entry = {
@@ -20,6 +21,7 @@ type Entry = {
  * 自動で載るもの
  * ─────────────────────────────────────────────
  * ・ライチ完全ガイド（data/lycheeGuide.ts）
+ * ・育てている果物（data/fruits.ts）
  * ・商品（data/products.ts。draft は除外される）
  * ・コラム（data/column.ts。記事が0件なら一覧ごと載せない）
  * データを足すだけで反映されるので、ここを手で触る必要はない。
@@ -61,6 +63,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly",
     lastModified: new Date(page.updatedAt),
   }));
+
+  /** 育てている果物。一覧と各果物のページ */
+  const fruitEntries: Entry[] = [
+    { path: "/fruits", priority: 0.7, changeFrequency: "monthly" },
+    ...fruits.map((fruit) => ({
+      path: fruitPath(fruit.slug),
+      priority: 0.7,
+      changeFrequency: "monthly" as const,
+      lastModified: new Date(fruit.updatedAt),
+    })),
+  ];
 
   const productEntries: Entry[] = visibleProducts.map((product) => ({
     path: `/products/${product.slug}`,
@@ -113,6 +126,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticEntries,
     ...guideEntries,
+    ...fruitEntries,
     ...productEntries,
     ...blogEntries,
     ...columnEntries,

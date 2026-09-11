@@ -430,6 +430,7 @@ export const footerNavigation = [
     title: "山川園芸",
     links: [
       { href: "/about", label: "山川園芸について" },
+      { href: "/fruits", label: "育てている果物" },
       { href: "/access", label: "農園・アクセス" },
       { href: "/news", label: "お知らせ" },
       { href: "/contact", label: "お問い合わせ" },

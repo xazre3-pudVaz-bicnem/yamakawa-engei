@@ -135,6 +135,12 @@ export default function AboutPage() {
             >
               農園情報・アクセス
             </Link>
+            <Link
+              href="/fruits"
+              className="inline-flex items-center justify-center border border-cream/40 px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-cream transition-colors duration-300 hover:bg-cream hover:text-forest-deep"
+            >
+              育てている果物
+            </Link>
             <a
               href={siteConfig.instagram.url}
               target="_blank"
