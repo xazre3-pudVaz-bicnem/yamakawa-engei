@@ -1,6 +1,13 @@
 import Link from "next/link";
 import Logo from "./Logo";
 import { footerNavigation, siteConfig } from "@/data/siteConfig";
+import { fruitPath, fruits } from "@/data/fruits";
+
+/**
+ * 「育てている果物」の下に、果物ごとの入口を一段下げて並べる。
+ * 中身は data/fruits.ts から作るので、果物を足せばここにも増える。
+ */
+const FRUITS_HREF = "/fruits";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -78,6 +85,21 @@ export default function Footer() {
                         >
                           {link.label}
                         </Link>
+
+                        {link.href === FRUITS_HREF && fruits.length > 0 ? (
+                          <ul className="mt-2 space-y-2 border-l border-cream/15 pl-3">
+                            {fruits.map((fruit) => (
+                              <li key={fruit.slug}>
+                                <Link
+                                  href={fruitPath(fruit.slug)}
+                                  className="text-[0.8rem] leading-relaxed text-cream/55 underline-offset-4 transition-colors hover:text-cream hover:underline"
+                                >
+                                  {fruit.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </li>
                     ))}
                   </ul>

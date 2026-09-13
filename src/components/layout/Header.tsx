@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Logo from "./Logo";
 import CartLink from "@/components/cart/CartLink";
+import { fruitPath, fruits } from "@/data/fruits";
 import {
   currentSales,
   isPurchasable,
@@ -18,7 +19,14 @@ import { cn } from "@/lib/utils";
  *
  * TOPページではヒーロー写真の上に重ねるため、最上部では背景を透過させる。
  * スクロールすると下地が入り、文字が写真に埋もれないようにする。
+ *
+ * 「育てている果物」には、果物ごとのサブメニューを出す。
+ * 並べる中身は data/fruits.ts から作るので、果物を足せばここにも増える。
+ * メニューの項目数を増やさずに、各果物へ1〜2手で入れるようにするための形。
  */
+
+/** サブメニューを出すメニュー項目 */
+const FRUITS_HREF = "/fruits";
 export default function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -86,7 +94,12 @@ export default function Header() {
           <nav aria-label="メインメニュー" className="hidden lg:block">
             <ul className="flex items-center gap-8">
               {navigation.map((item) => (
-                <li key={item.href}>
+                <li
+                  key={item.href}
+                  className={cn(
+                    item.href === FRUITS_HREF && "group relative",
+                  )}
+                >
                   <Link
                     href={item.href}
                     className={cn(
@@ -101,6 +114,28 @@ export default function Header() {
                   >
                     {item.label}
                   </Link>
+
+                  {/* 果物ごとのサブメニュー。
+                      キーボードでも開けるよう、visibility ではなく
+                      opacity と pointer-events で出し入れしている
+                      （visibility:hidden にすると中のリンクに
+                        フォーカスが当たらず、開けなくなる）。 */}
+                  {item.href === FRUITS_HREF && fruits.length > 0 ? (
+                    <div className="pointer-events-none absolute left-1/2 top-full z-50 w-56 -translate-x-1/2 pt-4 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                      <ul className="border border-ink/12 bg-paper py-2 shadow-[0_10px_30px_-18px_rgba(31,61,43,0.5)]">
+                        {fruits.map((fruit) => (
+                          <li key={fruit.slug}>
+                            <Link
+                              href={fruitPath(fruit.slug)}
+                              className="block px-5 py-2.5 text-[0.82rem] tracking-[0.04em] text-ink/80 transition-colors hover:bg-paper-warm hover:text-forest"
+                            >
+                              {fruit.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -172,6 +207,26 @@ export default function Header() {
                     {item.labelEn}
                   </span>
                 </Link>
+
+                {/* 果物ごとの入口。一段下げて、親との関係が分かるようにする */}
+                {item.href === FRUITS_HREF && fruits.length > 0 ? (
+                  <ul className="-mt-1 space-y-1 pb-5 pl-4">
+                    {fruits.map((fruit) => (
+                      <li key={fruit.slug}>
+                        <Link
+                          href={fruitPath(fruit.slug)}
+                          className="flex items-baseline gap-3 py-1.5 text-[0.88rem] text-cream/70"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="h-px w-3 shrink-0 translate-y-[-0.3rem] bg-cream/30"
+                          />
+                          {fruit.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>
