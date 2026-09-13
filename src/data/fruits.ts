@@ -97,14 +97,24 @@ export type Fruit = {
   /** 山川園芸での収穫時期。[TODO] 伺っていないため null */
   harvestSeason: string | null;
   /**
-   * 販売するか。
-   * false のあいだは「販売していません」と案内し、
-   * かわりに山川園芸のライチ（ShopCta）へつなぐ。
+   * 販売の状態。
+   *   "online"  … オンラインショップで販売している（productSlug が必要）
+   *   "inquiry" … お問い合わせでご相談を承る（価格が未定のときもこれ）
+   *   "none"    … 販売しない
+   *
+   * ★価格が決まっていないものを "online" にしないこと★
+   * 金額を出せないまま買い物かごへ進ませてはいけない。
    */
-  forSale: boolean;
+  sales: {
+    status: "online" | "inquiry" | "none";
+    /** ご用意できる形（例: "100gパック"）。伺っていなければ null */
+    packSize: string | null;
+    /** 画面にそのまま出す補足。伺っていなければ null */
+    note: string | null;
+  };
   /**
-   * 販売する場合の、オンラインショップの商品の slug。
-   * forSale を true にし、products.ts に商品を追加してから入れる。
+   * オンラインショップの商品の slug。
+   * sales.status を "online" にし、products.ts に商品を追加してから入れる。
    */
   productSlug: string | null;
 
@@ -314,7 +324,7 @@ export const fruits: Fruit[] = [
         "原産は中央アメリカ。メキシコからホンジュラスにかけての地域が自生地とされています。",
         "サボテンの仲間なので、葉のように見える平たい部分は茎です。その茎から、夜になると直径20cmほどの大きな白い花が咲きます。花がもつのは一晩だけで、朝にはしぼみます。",
         "花が咲いてからおよそ40日で、実を収穫できるようになります。つぼみや花びらは、野菜として食べることもできます。",
-        "国内の記録としては、石垣島にある試験園で、開花期が4月から10月、収穫期が6月から12月とされています。山川園芸での収穫の時期は、確認でき次第お伝えします。",
+        "山川園芸での収穫は、8月下旬から12月ごろまでです。国内のほかの記録としては、石垣島にある試験園で、開花期が4月から10月、収穫期が6月から12月とされています。",
       ],
     },
 
@@ -366,8 +376,14 @@ export const fruits: Fruit[] = [
     ],
     sourcesCheckedAt: "2026-09-13",
 
-    harvestSeason: null, // [TODO] 山川園芸での収穫時期
-    forSale: false, // [確認済] 販売しない
+    // [確認済] 2026年9月13日 農園からのメモ
+    harvestSeason: "8月下旬から12月ごろまで",
+    sales: {
+      // [確認済] ネット販売は現在準備できない。お問い合わせで承る
+      status: "inquiry",
+      packSize: null,
+      note: "オンラインショップでの販売は、ただいま準備中です。",
+    },
     productSlug: null,
 
     related: [
@@ -590,7 +606,12 @@ export const fruits: Fruit[] = [
     sourcesCheckedAt: "2026-09-13",
 
     harvestSeason: null, // [TODO] 山川園芸での収穫時期
-    forSale: false, // [確認済] 販売しない
+    // [確認済] 2026年9月13日 農園からのメモ「龍眼は少し販売できます」
+    sales: {
+      status: "inquiry",
+      packSize: "100gパック",
+      note: "数に限りがありますが、ご用意できる場合があります。",
+    },
     productSlug: null,
 
     related: [
@@ -751,7 +772,7 @@ export const fruits: Fruit[] = [
         "原産はメキシコ中部から中央アメリカの高地。英語では White sapote、Mexican apple とも呼ばれます。",
         "実は直径6〜11cmほど、重さは70〜700gと幅があります。果皮は黄緑色から黄金色で、中には1〜5個の種が入っています。",
         "熟した果肉は乳白色から黄色。酸味が少なく、やわらかくなりはじめのころは柿のような食感だとされています。",
-        "国内の記録としては、石垣島にある試験園で、開花は2月から3月ごろ、収穫は7月から8月ごろとされています。山川園芸での収穫の時期は、確認でき次第お伝えします。",
+        "山川園芸での収穫は、8月下旬から10月ごろまでです。国内のほかの記録としては、石垣島にある試験園で、開花は2月から3月ごろ、収穫は7月から8月ごろとされています。",
       ],
     },
 
@@ -799,8 +820,13 @@ export const fruits: Fruit[] = [
     ],
     sourcesCheckedAt: "2026-09-13",
 
-    harvestSeason: null, // [TODO] 山川園芸での収穫時期
-    forSale: false, // [確認済] 販売しない
+    // [確認済] 2026年9月13日 農園からのメモ
+    harvestSeason: "8月下旬から10月ごろまで",
+    sales: {
+      status: "inquiry",
+      packSize: "200gパック",
+      note: "数に限りがありますが、ご用意できる場合があります。",
+    },
     productSlug: null,
 
     related: [
@@ -855,7 +881,7 @@ export function fruitDisplayName(fruit: Fruit): string {
  * productSlug が入っていて、その商品が実際に販売中のときだけ商品を返す。
  */
 export function getFruitProduct(fruit: Fruit): Product | null {
-  if (!fruit.forSale || !fruit.productSlug) return null;
+  if (fruit.sales.status !== "online" || !fruit.productSlug) return null;
   const product = getProduct(fruit.productSlug);
   return product && isBuyable(product) ? product : null;
 }
@@ -869,13 +895,26 @@ export function fruitAvailabilityFaq(fruit: Fruit): {
   answer: string;
 } {
   const product = getFruitProduct(fruit);
+  if (fruit.sales.status === "online" && product) {
+    return {
+      question: `山川園芸の${fruit.name}は買えますか？`,
+      answer: `オンラインショップで「${product.name}」をお取り扱いしています。`,
+    };
+  }
+
+  if (fruit.sales.status === "inquiry") {
+    const pack = fruit.sales.packSize
+      ? `${fruit.sales.packSize}でのご用意になります。`
+      : "";
+    return {
+      question: `山川園芸の${fruit.name}は買えますか？`,
+      answer: `オンラインショップでのお取り扱いはありませんが、お電話またはお問い合わせよりご相談を承っています。${pack}収穫の状況によってご用意できる数が変わります。`,
+    };
+  }
+
   return {
     question: `山川園芸の${fruit.name}は買えますか？`,
-    answer: !fruit.forSale
-      ? `${fruit.name}は販売していません。山川園芸で育てている果物として、農園の様子をご紹介しています。オンラインショップでお届けしているのは生ライチです。`
-      : product
-        ? `オンラインショップで「${product.name}」をお取り扱いしています。`
-        : `いまはオンラインショップでのお取り扱いがありません。`,
+    answer: `${fruit.name}は販売していません。山川園芸で育てている果物として、農園の様子をご紹介しています。オンラインショップでお届けしているのは生ライチです。`,
   };
 }
 

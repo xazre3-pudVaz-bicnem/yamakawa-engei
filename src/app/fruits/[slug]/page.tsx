@@ -22,6 +22,7 @@ import {
   getFruit,
   getFruitProduct,
 } from "@/data/fruits";
+import { siteConfig } from "@/data/siteConfig";
 import { faqJsonLd } from "@/lib/jsonld";
 import { buildMetadata } from "@/lib/metadata";
 import { formatPrice } from "@/lib/utils";
@@ -419,8 +420,10 @@ export default async function FruitPage({
       </div>
 
       {/* ---- お取り扱い ----
-          販売する果物なら商品へ（赤＝購入導線）。
-          販売しない果物は、その旨を短く伝えて山川園芸のライチへつなぐ。 */}
+          online  … 商品へ（赤＝購入導線）
+          inquiry … 価格が決まっていないので、買い物かごへは進ませず
+                    お電話・お問い合わせでご相談を承る
+          none    … 販売しないことを伝えて、山川園芸のライチへつなぐ */}
       {product ? (
         <section className="bg-forest-deep text-paper">
           <div className="mx-auto w-full max-w-4xl px-5 py-20 text-center md:px-8 md:py-24">
@@ -437,6 +440,49 @@ export default async function FruitPage({
               >
                 商品を見る
               </Link>
+            </Reveal>
+          </div>
+        </section>
+      ) : fruit.sales.status === "inquiry" ? (
+        <section className="bg-forest-deep text-paper">
+          <div className="mx-auto w-full max-w-4xl px-5 py-20 text-center md:px-8 md:py-24">
+            <Reveal>
+              <h2 className="font-mincho text-[1.35rem] leading-[1.7] md:text-[1.6rem]">
+                {fruit.name}のお取り扱いについて
+              </h2>
+              <div className="mx-auto mt-6 max-w-xl space-y-3 text-[0.92rem] leading-[2.05] text-paper/80">
+                {fruit.sales.note ? <p>{fruit.sales.note}</p> : null}
+                <p>
+                  {fruit.sales.packSize
+                    ? `${fruit.sales.packSize}でのご用意になります。`
+                    : ""}
+                  収穫の状況によってご用意できる数が変わります。
+                  お電話またはお問い合わせよりご相談ください。
+                </p>
+                {fruit.harvestSeason ? (
+                  <p className="text-paper/70">
+                    {fruit.name}の収穫は{fruit.harvestSeason}です。
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
+                <a
+                  href={siteConfig.phoneHref}
+                  className="inline-flex items-center justify-center border border-paper bg-paper px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-forest transition-colors duration-300 hover:bg-paper-warm"
+                >
+                  電話をかける
+                </a>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center border border-paper/50 px-8 py-3.5 text-[0.9rem] tracking-[0.08em] text-paper transition-colors duration-300 hover:border-paper"
+                >
+                  お問い合わせ
+                </Link>
+              </div>
+              <p className="mt-6 text-[0.8rem] leading-[1.9] text-paper/60">
+                {siteConfig.phone}（{siteConfig.phoneNote}）
+              </p>
             </Reveal>
           </div>
         </section>
