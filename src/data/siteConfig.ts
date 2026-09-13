@@ -399,6 +399,7 @@ export const contactConfig = {
 export const navigation = [
   { href: "/shop", label: "オンラインショップ", labelEn: "Shop" },
   { href: "/lychee", label: "ライチ完全ガイド", labelEn: "Lychee guide" },
+  { href: "/fruits", label: "育てている果物", labelEn: "Our fruits" },
   { href: "/about", label: "山川園芸について", labelEn: "About" },
   { href: "/access", label: "農園・アクセス", labelEn: "Access" },
 ] as const;

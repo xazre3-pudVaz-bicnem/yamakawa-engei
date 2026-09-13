@@ -9,6 +9,7 @@ import LycheeGuideSection from "@/components/sections/home/LycheeGuideSection";
 import EnjoySection from "@/components/sections/home/EnjoySection";
 import GiftSection from "@/components/sections/home/GiftSection";
 import StorySection from "@/components/sections/home/StorySection";
+import OtherFruitsSection from "@/components/sections/home/OtherFruitsSection";
 import InstagramSection from "@/components/sections/home/InstagramSection";
 import FaqSection from "@/components/sections/home/FaqSection";
 import AccessSection from "@/components/sections/home/AccessSection";
@@ -61,6 +62,11 @@ export default function HomePage() {
 
       {/* 9. 山川園芸について */}
       <StorySection />
+
+      {/* 9-2. ライチのほかに育てている果物
+             農園のストーリーの直後に置くことで、
+             「どんな農園なのか」を読んだ流れのまま見てもらえる */}
+      <OtherFruitsSection />
 
       {/* 10. 農園の日々（Instagram） */}
       <InstagramSection />
