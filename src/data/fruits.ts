@@ -81,6 +81,14 @@ export type Fruit = {
   features: Array<{ label: string; value: string }>;
   /** 食べ方の手順 */
   howToEat: string[];
+  /** 食べ方のそばに置く写真（切り口など）。無ければ省く */
+  howToEatPhoto?: FruitPhoto;
+  /**
+   * 農園ご本人から伺った話。
+   * ★伺っていない内容をここに書かないこと★
+   * 出どころ（いつ・何で伺ったか）をコメントに残す。
+   */
+  farmNote?: { body: string[] };
   /** 食べるときの注意 */
   cautions: string[];
   /** よくある質問。お取り扱いの質問は自動で足される */
@@ -167,9 +175,9 @@ export const fruits: Fruit[] = [
           caption: "茎の先で色づいた実",
         },
         {
-          src: "/images/fruits/dragon-fruit/flowers.jpg",
-          alt: "ハウスの中で咲いたドラゴンフルーツの白い花",
-          caption: "ハウスで咲いた白い花",
+          src: "/images/fruits/dragon-fruit/flower-open.jpg",
+          alt: "ドラゴンフルーツの大きな白い花。中心に雌しべと黄色い雄しべ",
+          caption: "開いた花。中心に雌しべと雄しべ",
         },
         {
           src: "/images/fruits/dragon-fruit/green-fruits.jpg",
@@ -194,6 +202,13 @@ export const fruits: Fruit[] = [
       "スプーンですくって食べるか、皮をむいて食べやすい大きさに切ります。",
       "黒い種は取らずに、そのまま食べられます。",
     ],
+
+    // [確認済] 2026年9月13日にいただいた写真。切ると白い果肉に黒い種
+    howToEatPhoto: {
+      src: "/images/fruits/dragon-fruit/halved.jpg",
+      alt: "半分に切ったドラゴンフルーツ。白い果肉に黒い種が散らばっている",
+      caption: "半分に切ったところ。白い果肉に、黒い種",
+    },
 
     cautions: [
       "果肉が赤いものは、果汁が服や手につくと落ちにくいことがあります。",
@@ -263,9 +278,9 @@ export const fruits: Fruit[] = [
     ],
 
     hero: {
-      src: "/images/fruits/longan/hanging-fruits.jpg",
-      alt: "山川園芸で枝から下がる龍眼の実",
-      caption: "枝から下がる龍眼の実",
+      src: "/images/fruits/longan/cluster-hires.jpg",
+      alt: "山川園芸で枝から下がる龍眼の実の房",
+      caption: "枝から下がる龍眼の房",
     },
 
     farm: {
@@ -285,7 +300,7 @@ export const fruits: Fruit[] = [
           caption: "葉のあいだの、薄茶色の房",
         },
         {
-          src: "/images/fruits/longan/greenhouse-tree.jpg",
+          src: "/images/fruits/longan/greenhouse-tree-hires.jpg",
           alt: "ハウスの中で実をつけた龍眼の木",
           caption: "ハウスの中の龍眼の木",
         },
@@ -347,7 +362,7 @@ export const fruits: Fruit[] = [
     meta: {
       title: "ホワイトサポテ｜鹿児島・指宿の農園で育つ南国の果物",
       description:
-        "ホワイトサポテはメキシコから中央アメリカが原産のミカン科の果物。鹿児島県指宿市山川の山川園芸で育つ実の様子と、食べごろの目安・食べ方をご紹介します。",
+        "ホワイトサポテはメキシコから中央アメリカが原産のミカン科の果物。アボカドのように追熟させるとメロンのように甘くなります。鹿児島県指宿市山川の山川園芸で育つ実の様子と、食べごろの目安・食べ方をご紹介します。",
       keywords: [
         "ホワイトサポテ",
         "ホワイトサポテ 食べ方",
@@ -361,7 +376,7 @@ export const fruits: Fruit[] = [
 
     answer: {
       question: "ホワイトサポテとは？",
-      body: "メキシコから中央アメリカが原産の、ミカン科の果物です。緑色の皮の中に、クリーム色のなめらかな果肉が詰まっています。やわらかく熟したものを、スプーンですくって食べます。",
+      body: "メキシコから中央アメリカが原産の、ミカン科の果物です。緑色の皮の中に、クリーム色のなめらかな果肉が詰まっています。アボカドのように追熟させると、メロンのように甘くなります。",
     },
 
     intro: [
@@ -372,7 +387,7 @@ export const fruits: Fruit[] = [
     ],
 
     hero: {
-      src: "/images/fruits/white-sapote/on-tree.jpg",
+      src: "/images/fruits/white-sapote/on-tree-hires.jpg",
       alt: "山川園芸で木になったホワイトサポテの緑色の実",
       caption: "木になったホワイトサポテ",
     },
@@ -406,15 +421,24 @@ export const fruits: Fruit[] = [
       { label: "分類", value: "ミカン科" },
       { label: "原産", value: "メキシコ〜中央アメリカ" },
       { label: "皮", value: "緑色〜黄緑色。食べない" },
-      { label: "果肉", value: "クリーム色で、なめらか" },
+      { label: "果肉", value: "クリーム色で、ねっとりとなめらか" },
       { label: "種", value: "大きめの種が入っている。食べない" },
     ],
 
+    // [確認済] 山川園芸の販売用POP（2026年9月13日にいただいたもの）より
     howToEat: [
-      "指で軽く押して、少しやわらかさを感じるころが食べごろの目安です。",
-      "半分に切り、種を取り除きます。",
-      "皮は食べずに、果肉をスプーンですくって食べます。",
+      "緑のうちは、アボカドのように常温で追熟させます。",
+      "指で押してやわらかく感じるころが食べごろです。半分に切り、種を取り除きます。",
+      "皮は食べずに、アイスクリームのようにスプーンですくって食べます。",
     ],
+
+    // [確認済] 山川園芸の販売用POP（2026年9月13日）に書かれていた内容
+    farmNote: {
+      body: [
+        "緑の実は、アボカドのように熟成させてください。やわらかくなると、メロンのように甘くなります。",
+        "ねっとりとしたクリームのような果肉です。アイスクリームみたいに、すくってお召し上がりください。",
+      ],
+    },
 
     cautions: ["種と皮は食べないでください。"],
 
@@ -422,7 +446,7 @@ export const fruits: Fruit[] = [
       {
         question: "ホワイトサポテの食べごろは？",
         answer:
-          "一般に、収穫したあと常温に置き、指で押して少しやわらかく感じるころが食べごろの目安とされています。かたいうちは、まだ食べごろではありません。",
+          "緑のうちは、アボカドのように常温で追熟させてください。指で押してやわらかく感じるころが食べごろです。やわらかくなると、メロンのように甘くなります。",
       },
       {
         question: "ホワイトサポテの種や皮は食べられますか？",
@@ -440,6 +464,25 @@ export const fruits: Fruit[] = [
     ],
 
     updatedAt: "2026-09-10",
+  },
+];
+
+/* ================================================================
+   ページはまだ作っていない果物
+   ---------------------------------------------------------------
+   写真はいただいているが、紹介文を書けるだけの材料が揃っていないもの。
+   写真と話が増えたら、上の fruits 配列に移してページを作る。
+================================================================ */
+
+export const alsoGrowing: Array<{ name: string; photo: FruitPhoto }> = [
+  {
+    // [確認済] 2026年9月13日にいただいた写真
+    name: "グァバ",
+    photo: {
+      src: "/images/fruits/guava/on-branch.jpg",
+      alt: "山川園芸のハウスで枝についた、緑色のグァバの実",
+      caption: "枝についたグァバの実",
+    },
   },
 ];
 

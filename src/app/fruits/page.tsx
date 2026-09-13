@@ -2,7 +2,7 @@ import Link from "next/link";
 import PageHero from "@/components/ui/PageHero";
 import Photo from "@/components/ui/Photo";
 import Reveal from "@/components/ui/Reveal";
-import { fruitDisplayName, fruitPath, fruits } from "@/data/fruits";
+import { alsoGrowing, fruitDisplayName, fruitPath, fruits } from "@/data/fruits";
 import { buildMetadata } from "@/lib/metadata";
 
 /**
@@ -95,6 +95,45 @@ export default function FruitsPage() {
           })}
         </div>
       </section>
+
+      {/* ---- ページを作っていない果物 ---- */}
+      {alsoGrowing.length > 0 ? (
+        <section className="mx-auto w-full max-w-6xl px-5 pb-20 md:px-8 md:pb-24">
+          <Reveal>
+            <h2 className="font-mincho text-[1.3rem] leading-snug text-forest md:text-[1.5rem]">
+              このほかに育てているもの
+            </h2>
+            <span
+              aria-hidden="true"
+              className="reveal-line mt-7 block h-px w-16 bg-leaf/60"
+            />
+          </Reveal>
+
+          <div className="mt-10 grid gap-10 sm:grid-cols-2 md:gap-12">
+            {alsoGrowing.map((item, index) => (
+              <Reveal key={item.name} delay={index * 0.06}>
+                <figure className="grid grid-cols-[8rem_1fr] items-center gap-5 md:grid-cols-[11rem_1fr] md:gap-7">
+                  <Photo
+                    src={item.photo.src}
+                    alt={item.photo.alt}
+                    aspect="aspect-[4/3]"
+                    sizes="176px"
+                    tone="leaf"
+                  />
+                  <figcaption>
+                    <span className="block font-mincho text-[1.1rem] text-forest">
+                      {item.name}
+                    </span>
+                    <span className="mt-2 block text-[0.84rem] leading-[1.85] text-moss">
+                      {item.photo.caption}
+                    </span>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ---- ライチへ ---- */}
       <section className="bg-paper-warm">

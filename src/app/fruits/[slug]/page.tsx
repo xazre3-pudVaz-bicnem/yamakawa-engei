@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AnswerBox from "@/components/guide/AnswerBox";
+import FarmNote from "@/components/guide/FarmNote";
 import ShopCta from "@/components/guide/ShopCta";
 import FruitFarmPhotos from "@/components/sections/fruits/FruitFarmPhotos";
 import FaqList from "@/components/ui/FaqList";
@@ -215,6 +216,31 @@ export default async function FruitPage({
                 </li>
               ))}
             </ol>
+
+            {fruit.howToEatPhoto ? (
+              <figure className="mt-10">
+                <Photo
+                  src={fruit.howToEatPhoto.src}
+                  alt={fruit.howToEatPhoto.alt}
+                  aspect="aspect-[4/3]"
+                  sizes="(min-width: 1024px) 46vw, 100vw"
+                  tone="leaf"
+                />
+                <figcaption className="mt-3 text-[0.8rem] leading-[1.8] text-moss">
+                  {fruit.howToEatPhoto.caption}
+                </figcaption>
+              </figure>
+            ) : null}
+
+            {fruit.farmNote ? (
+              <div className="mt-10">
+                <FarmNote title={`${fruit.name}のおすすめの食べ方`} fromProducer>
+                  {fruit.farmNote.body.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </FarmNote>
+              </div>
+            ) : null}
 
             {fruit.cautions.length > 0 ? (
               <div className="mt-10 border border-ink/12 bg-paper-warm px-5 py-5">
