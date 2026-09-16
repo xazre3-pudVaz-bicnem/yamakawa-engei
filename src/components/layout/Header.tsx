@@ -6,12 +6,8 @@ import { useEffect, useState } from "react";
 import Logo from "./Logo";
 import CartLink from "@/components/cart/CartLink";
 import { fruitPath, fruits } from "@/data/fruits";
-import {
-  currentSales,
-  isPurchasable,
-  navigation,
-  siteConfig,
-} from "@/data/siteConfig";
+import { currentSales, navigation, siteConfig } from "@/data/siteConfig";
+import { hasBuyableProducts } from "@/data/products";
 import { cn } from "@/lib/utils";
 
 /**
@@ -144,13 +140,14 @@ export default function Header() {
           <div className="flex items-center gap-1 md:gap-3">
             <CartLink tone={tone} />
 
-            {/* 販売中・予約中のときだけ購入ボタンを出す */}
-            {isPurchasable && (
+            {/* 買える商品が1つでもあるときに購入ボタンを出す。
+                ライチが終わっていても、ほかの果物を販売していることがある */}
+            {hasBuyableProducts() && (
               <Link
                 href="/shop"
                 className="hidden border border-lychee bg-lychee px-6 py-2.5 text-[0.8rem] tracking-[0.08em] text-white transition-colors hover:border-lychee-deep hover:bg-lychee-deep lg:inline-flex"
               >
-                {currentSales.ctaLabel}
+                オンラインショップ
               </Link>
             )}
 

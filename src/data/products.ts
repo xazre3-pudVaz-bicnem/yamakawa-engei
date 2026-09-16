@@ -97,6 +97,13 @@ export type Product = {
    * null の商品はカートに入れられない（lib/order.ts が弾く）。
    */
   weightGrams: number | null;
+  /**
+   * 1個口（60サイズ）に入る最大数。
+   * 農園から「〇個までなら1個口で送れる」と伺えている商品に入れる。
+   * ここが入っている商品は、重さではなく個数で個口数を計算する。
+   * ライチは重さで詰める条件を伺っているため null のままにすること。
+   */
+  maxPerParcel: number | null;
   /** 個数の目安（例: "約12〜13粒"）。未確認なら null */
   countGuide: string | null;
 
@@ -119,6 +126,14 @@ export type Product = {
   storage: string | null;
   /** 包装について。未確認なら null */
   packaging: string | null;
+  /**
+   * 山川園芸が育てたものでない場合の注記。
+   * ほかの農園のものを預かってお届けする商品に入れる。
+   * 誰が育てたのかを、必ずお客様に分かるようにすること。
+   */
+  producerNote: string | null;
+  /** 写真の提供元。ほかの農園からお借りしている場合に入れる */
+  photoCredit: string | null;
   /** この商品に lycheeVarieties（品種一覧）を表示するか */
   showVarieties: boolean;
 
@@ -216,6 +231,7 @@ export const products: Product[] = [
     volume: "500g", // [公式]
     // [確認済] 梱包条件（1個口に何点入るか）はこの重量を基準に伺っている
     weightGrams: 500,
+    maxPerParcel: null, // ライチは重さで詰める（CONFIRMED_PACKINGS 参照）
     countGuide: "約12〜13粒", // [公式]
 
     // ★販売状況はここで切り替える★
@@ -239,6 +255,8 @@ export const products: Product[] = [
 
     // [確認済] ジッパー付きの袋のほか、店頭販売と同じ包装にも対応
     packaging: siteConfig.packagingNote,
+    producerNote: null,
+    photoCredit: null,
     showVarieties: true,
 
     lead: "薩摩半島のいちばん南、指宿・山川で育った生のライチです。",
@@ -321,6 +339,7 @@ export const products: Product[] = [
     volume: "350g",
     // [確認済] 梱包条件（1個口に何点入るか）はこの重量を基準に伺っている
     weightGrams: 350,
+    maxPerParcel: null, // ライチは重さで詰める（CONFIRMED_PACKINGS 参照）
     // [TODO] 個数の目安が分かれば入れる（500gは約12〜13粒）。
     // 推測では書かないため、確認が取れるまで空にしている。
     countGuide: null,
@@ -341,6 +360,8 @@ export const products: Product[] = [
       "冷蔵庫で約1週間を目安にお召し上がりください。乾燥すると果皮の色が変わりやすいため、ジッパー付きの袋などに入れて保存してください。",
 
     packaging: siteConfig.packagingNote,
+    producerNote: null,
+    photoCredit: null,
     showVarieties: true,
 
     lead: "まずは少しだけ試してみたい方に。指宿・山川の生ライチ、350gです。",
@@ -393,6 +414,285 @@ export const products: Product[] = [
     gtin: null,
     relatedSlugs: ["nama-lychee-500g"],
   },
+
+  /* ──────────────────────────────────────────────
+     龍眼（リュウガン）
+     [確認済] 2026年9月16日 農園より
+       売価 1P100g 400円／9月〜10月頃まで販売
+       龍眼のみだと60サイズに、最大6個までなら1個口
+  ────────────────────────────────────────────── */
+  {
+    id: "longan-100g",
+    slug: "ryugan-100g",
+    name: "龍眼（リュウガン） 100g",
+    shortName: "龍眼 100g",
+    category: "tropical-fruit",
+
+    price: 400, // [確認済] 売価
+    taxIncluded: true,
+    priceNote: "表示価格は税込です。送料は別途かかります。",
+
+    volume: "1パック 100g", // [確認済]
+    weightGrams: 100,
+    maxPerParcel: 6, // [確認済] 龍眼のみなら6パックまで1個口
+    countGuide: null, // [TODO] 1パックの粒数の目安
+
+    // ★販売状況はここで切り替える★
+    availability: "in_stock",
+    maxQuantity: 6,
+
+    saleStart: null,
+    saleEnd: null,
+
+    shippingSchedule: "9月から10月ごろまでのお届けです。", // [確認済]
+    shippingMethod:
+      "ヤマト運輸のクール便（冷蔵）でお届けします。保冷バッグと保冷剤をお入れします。", // [確認済]
+
+    origin: siteConfig.origin,
+    producerNote: null,
+    photoCredit: null,
+
+    storage:
+      "ポリ袋などに入れて冷蔵庫で保存し、5〜7日を目安にお召し上がりください。追熟しないため、届いたらお早めにどうぞ。",
+
+    packaging: "パックに入れ、保冷バッグと保冷剤とともにお届けします。",
+    showVarieties: false,
+
+    lead: "ライチと同じムクロジ科。薄茶色の皮をむくと、半透明の白い果肉があらわれます。",
+
+    description: [
+      "指宿・山川のハウスで育てた龍眼です。枝先に房になって実り、樹の上で完熟させてから収穫します。",
+      "薄い皮は手でかんたんにむけます。中から出てくるのは、半透明の白い果肉。果肉越しに透ける黒い種が龍の目のように見えることが、名前の由来とされています。",
+      "木から外すとそれ以上甘くなりません。届いたら、冷やしてお早めに召し上がってください。",
+    ],
+
+    features: [
+      "ライチと同じムクロジ科の果物",
+      "薄茶色のなめらかな皮は、手でむける",
+      "半透明の白い果肉と、黒くて丸い種",
+    ],
+
+    eatingSuggestions: [
+      "冷蔵庫で冷やして、皮をむいてそのまま",
+      "種を外して、デザートやドリンクに",
+    ],
+
+    cautions: [
+      "種は食べずに、取り除いてください。龍眼の種はサポニンを含み、食用にはされていません。",
+      "追熟しません。お届け後はお早めにお召し上がりください。",
+      "生鮮食品です。収穫の状況により、お届けが前後する場合があります。",
+      siteConfig.giftWrapping.note,
+    ],
+
+    images: [
+      {
+        src: "/images/products/longan/peeled.jpg",
+        alt: "皮をむいた龍眼。半透明の白い果肉と黒い種",
+        slot: "products/longan/peeled.jpg",
+      },
+      {
+        src: "/images/fruits/longan/cluster-hires.jpg",
+        alt: "山川園芸で枝から下がる龍眼の実の房",
+        slot: "fruits/longan/cluster-hires.jpg",
+      },
+      {
+        src: "/images/products/longan/in-box.jpg",
+        alt: "箱に詰めた龍眼のパック",
+        slot: "products/longan/in-box.jpg",
+      },
+    ],
+
+    condition: "new",
+    gtin: null,
+    relatedSlugs: ["white-sapote-150g", "starfruit"],
+  },
+
+  /* ──────────────────────────────────────────────
+     完熟ホワイトサポテ
+     [確認済] 2026年9月16日 農園より
+       売価 1P150g 400円／9月頃まで販売
+       ホワイトサポテのみだと60サイズに、最大6個までなら1個口
+  ────────────────────────────────────────────── */
+  {
+    id: "white-sapote-150g",
+    slug: "white-sapote-150g",
+    name: "完熟ホワイトサポテ 150g",
+    shortName: "完熟ホワイトサポテ",
+    category: "tropical-fruit",
+
+    price: 400, // [確認済] 売価
+    taxIncluded: true,
+    priceNote: "表示価格は税込です。送料は別途かかります。",
+
+    volume: "1パック 150g", // [確認済]
+    weightGrams: 150,
+    maxPerParcel: 6, // [確認済] ホワイトサポテのみなら6個まで1個口
+    countGuide: null,
+
+    availability: "in_stock",
+    maxQuantity: 6,
+
+    saleStart: null,
+    saleEnd: null,
+
+    shippingSchedule: "9月ごろまでのお届けです。", // [確認済]
+    shippingMethod:
+      "ヤマト運輸のクール便（冷蔵）でお届けします。保冷バッグと保冷剤をお入れします。", // [確認済]
+
+    origin: siteConfig.origin,
+    producerNote: null,
+    photoCredit: null,
+
+    storage:
+      "完熟したものをお届けします。冷蔵庫で保存し、7〜10日を目安にお早めにお召し上がりください。",
+
+    packaging: "ひとつずつ包み、保冷バッグと保冷剤とともにお届けします。",
+    showVarieties: false,
+
+    lead: "みかんと同じミカン科。クリーム色のなめらかな果肉を、スプーンですくって。",
+
+    description: [
+      "指宿・山川で育てたホワイトサポテです。名前に「サポテ」とつきますが、みかんやレモンと同じミカン科の果物です。",
+      "追熟させた完熟のものをお届けします。半分に切って、クリーム色の果肉をスプーンですくってお召し上がりください。",
+      "農園からは「緑の実はアボカドのように熟成させると、メロンのように甘くなる」「ねっとりとしたクリームのような果肉を、アイスクリームみたいにすくって」とお伝えしています。",
+    ],
+
+    features: [
+      "ミカン科の果物。名前に反してサポテ類とは別の仲間",
+      "クリーム色で、ねっとりとなめらかな果肉",
+      "完熟した状態でお届けします",
+    ],
+
+    eatingSuggestions: [
+      "半分に切って、スプーンですくって",
+      "冷やしてデザートに",
+    ],
+
+    cautions: [
+      "種は食べないでください。ホワイトサポテの種には毒性があるとされています（フロリダ大学IFAS Extension）。",
+      "果皮も食べません。取り除いて、果肉だけを召し上がってください。",
+      "小さなお子様が召し上がる際は、種が残っていないか確かめてください。",
+      "完熟品のため傷みやすく、お届け後はお早めにお召し上がりください。",
+      siteConfig.giftWrapping.note,
+    ],
+
+    images: [
+      {
+        src: "/images/products/white-sapote/fruits.jpg",
+        alt: "完熟したホワイトサポテの実",
+        slot: "products/white-sapote/fruits.jpg",
+      },
+      {
+        src: "/images/fruits/white-sapote/cut.jpg",
+        alt: "半分に切ったホワイトサポテ。クリーム色の果肉と種",
+        slot: "fruits/white-sapote/cut.jpg",
+      },
+      {
+        src: "/images/products/white-sapote/in-box.jpg",
+        alt: "箱に詰めたホワイトサポテ",
+        slot: "products/white-sapote/in-box.jpg",
+      },
+    ],
+
+    condition: "new",
+    gtin: null,
+    relatedSlugs: ["ryugan-100g", "starfruit"],
+  },
+
+  /* ──────────────────────────────────────────────
+     スターフルーツ（櫻井植物園）
+     [確認済] 2026年9月16日 農園より
+       売価 1個400円／10月〜4、5月まで販売
+       スターフルーツのみだと60サイズに、最大8個までなら1個口
+       櫻井植物園のものを販売する。写真も櫻井植物園から
+  ────────────────────────────────────────────── */
+  {
+    id: "starfruit-1",
+    slug: "starfruit",
+    name: "スターフルーツ 1個",
+    shortName: "スターフルーツ",
+    category: "tropical-fruit",
+
+    price: 400, // [確認済] 売価（1個あたり）
+    taxIncluded: true,
+    priceNote: "表示価格は税込です。送料は別途かかります。",
+
+    volume: "1個", // [確認済]
+    weightGrams: null, // [TODO] 1個あたりの重さは伺っていない
+    maxPerParcel: 8, // [確認済] スターフルーツのみなら8個まで1個口
+    countGuide: null,
+
+    // ★10月から販売開始★ 時期が来たら "in_stock" に切り替える
+    availability: "coming_soon",
+    maxQuantity: 8,
+
+    saleStart: null, // [TODO] 今季の販売開始日（10月のいつからか）
+    saleEnd: null,
+
+    shippingSchedule: "10月から4〜5月ごろまでのお届けです。", // [確認済]
+    shippingMethod:
+      "ヤマト運輸のクール便（冷蔵）でお届けします。保冷バッグと保冷剤をお入れします。", // [確認済]
+
+    origin: "櫻井植物園",
+    // [確認済] スターフルーツは櫻井植物園で育てられたもの
+    producerNote:
+      "このスターフルーツは、櫻井植物園で育てられたものを山川園芸がお届けします。",
+    photoCredit: "写真提供：櫻井植物園",
+
+    storage:
+      "冷暗所または冷蔵庫で保存し、お早めにお召し上がりください。", // [TODO] 日持ちの目安は未確認
+
+    packaging: "ひとつずつ包み、保冷バッグと保冷剤とともにお届けします。",
+    showVarieties: false,
+
+    lead: "輪切りにすると、断面が星の形。黄色く色づいた実をお届けします。",
+
+    description: [
+      "スターフルーツは、輪切りにしたときの断面が星の形になる果物です。稜（りょう）と呼ばれる5つの張り出しが、切り口の形をつくります。",
+      "黄色く色づいた実をお届けします。皮をむかずに、洗って輪切りにするだけで召し上がれます。",
+      "このスターフルーツは、櫻井植物園で育てられたものです。",
+    ],
+
+    features: [
+      "輪切りにすると断面が星の形",
+      "皮をむかずに食べられる",
+      "櫻井植物園で育てられた実",
+    ],
+
+    eatingSuggestions: [
+      "洗って輪切りにして、そのまま",
+      "サラダやデザートの飾りに",
+    ],
+
+    cautions: [
+      "腎臓の病気をお持ちの方、腎機能に不安のある方は、召し上がる前にかかりつけのお医者様にご相談ください。",
+      "生鮮食品です。お届け後はお早めにお召し上がりください。",
+      siteConfig.giftWrapping.note,
+    ],
+
+    images: [
+      {
+        src: "/images/products/starfruit/fruits.jpg",
+        alt: "黄色く色づいたスターフルーツの実",
+        slot: "products/starfruit/fruits.jpg",
+      },
+      {
+        src: "/images/sakurai/starfruit-ripe-pair.jpg",
+        alt: "櫻井植物園の木になった、黄色いスターフルーツ",
+        slot: "sakurai/starfruit-ripe-pair.jpg",
+      },
+      {
+        src: "/images/products/starfruit/in-box.jpg",
+        alt: "箱に詰めたスターフルーツ",
+        slot: "products/starfruit/in-box.jpg",
+      },
+    ],
+
+    condition: "new",
+    gtin: null,
+    relatedSlugs: ["ryugan-100g", "white-sapote-150g"],
+  },
+
 ];
 
 /* ================================================================
@@ -437,6 +737,11 @@ export function getRelatedProducts(product: Product, limit = 3): Product[] {
   );
 
   return [...explicit, ...fallback].slice(0, limit);
+}
+
+/** いま買える商品が1つでもあるか（ライチの販売状況とは別に見る） */
+export function hasBuyableProducts(): boolean {
+  return visibleProducts.some(isBuyable);
 }
 
 /** カートに入れられる状態か */

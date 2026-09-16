@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Hero from "@/components/sections/home/Hero";
 import SalesStatusSection from "@/components/sections/home/SalesStatusSection";
+import LineupSection from "@/components/sections/home/LineupSection";
 import LycheeIntroSection from "@/components/sections/home/LycheeIntroSection";
 import OurLycheeSection from "@/components/sections/home/OurLycheeSection";
 import ProductsSection from "@/components/sections/home/ProductsSection";
@@ -36,6 +37,11 @@ export default function HomePage() {
 
       {/* 2. 今年のライチ販売状況 */}
       <SalesStatusSection />
+
+      {/* 2-2. 取り扱っている果物の一覧
+             ライチだけの農園に見えないよう、ファーストビューのすぐ下で
+             扱っている品目と価格・販売状況を一目で見せる */}
+      <LineupSection />
 
       {/* 3. 生のライチ、食べたことありますか？ */}
       <LycheeIntroSection />

@@ -288,9 +288,17 @@ export const isPackingModelConsistent: boolean = CONFIRMED_PACKINGS.every(
 export type ShippingLine = {
   /** 内訳の表示に使う商品名 */
   name: string;
-  /** 商品1点の重量（g）。null なら計算できない */
-  weightGrams: number | null;
   quantity: number;
+  /**
+   * 重さで詰める商品（ライチ）の、1点あたりの重量（g）。
+   * maxPerParcel が入っている商品では使わない。
+   */
+  weightGrams: number | null;
+  /**
+   * 1個口（60サイズ）に入る最大数。
+   * 農園から「〇個までなら1個口」と伺えている商品に入れる。
+   */
+  maxPerParcel: number | null;
 };
 
 export type ParcelPlan =
@@ -321,12 +329,34 @@ export function planParcels(lines: ShippingLine[]): ParcelPlan {
     };
   }
 
+  /* ---- 詰め方の系統ごとに分ける ----
+     ライチ  … 重さで詰める（1個口1,200gまで。確認済みの条件から導いた値）
+     南国果実 … 個数で決まる（「〇個までなら1個口」と伺っている）
+
+     この2つは根拠が別なので、ひとまとめにできない。
+     混ざったときは系統ごとに個口を分けて数える（少なく見積もらない）。 */
   const items: PackItem[] = [];
+  /** 個数で決まる商品の「1個口に対する占有率」の合計 */
+  let shareTotal = 0;
+  let shareCount = 0;
 
   for (const line of lines) {
     if (!Number.isInteger(line.quantity) || line.quantity < 1) {
       return { ok: false, reason: "ご注文の数量を確認できませんでした。" };
     }
+
+    if (line.maxPerParcel !== null) {
+      if (!Number.isInteger(line.maxPerParcel) || line.maxPerParcel < 1) {
+        return {
+          ok: false,
+          reason: `「${line.name}」の配送方法を確認しております。お手数ですが、お問い合わせよりご注文ください。`,
+        };
+      }
+      shareTotal += line.quantity / line.maxPerParcel;
+      shareCount += line.quantity;
+      continue;
+    }
+
     if (line.weightGrams === null || !Number.isFinite(line.weightGrams)) {
       return {
         ok: false,
@@ -336,6 +366,30 @@ export function planParcels(lines: ShippingLine[]): ParcelPlan {
     for (let i = 0; i < line.quantity; i++) {
       items.push({ label: line.name, weightGrams: line.weightGrams });
     }
+  }
+
+  /** 個数で決まる商品の個口数 */
+  const shareParcels = shareCount > 0 ? Math.ceil(roundShare(shareTotal)) : 0;
+
+  if (shareCount > MAX_COUNT_ITEMS) {
+    return {
+      ok: false,
+      reason:
+        "ご注文の点数が多いため、この画面ではお受けできません。お手数ですが、お問い合わせよりご相談ください。",
+    };
+  }
+
+  // 重さで詰める商品が無いときは、ここで確定する
+  if (items.length === 0) {
+    if (shareParcels === 0) {
+      return { ok: false, reason: "カートに商品が入っていません。" };
+    }
+    return {
+      ok: true,
+      parcels: shareParcels,
+      totalWeightGrams: 0,
+      breakdown: [],
+    };
   }
 
   const packed = packItems(items, PARCEL_CAPACITY_GRAMS);
@@ -361,11 +415,24 @@ export function planParcels(lines: ShippingLine[]): ParcelPlan {
 
   return {
     ok: true,
-    parcels: packed.count,
+    parcels: packed.count + shareParcels,
     totalWeightGrams: packed.totalWeightGrams,
     breakdown: packed.parcels,
   };
 }
+
+/**
+ * 占有率の合計は小数の誤差が出る（1/3 を3つ足すと 0.9999… になる）。
+ * そのままだと切り上げで1個口多くなってしまうため、
+ * ごくわずかな誤差だけを丸める。
+ */
+function roundShare(value: number): number {
+  const rounded = Math.round(value);
+  return Math.abs(value - rounded) < 1e-9 ? rounded : value;
+}
+
+/** 個数で決まる商品の、1回のご注文で扱える点数の上限 */
+const MAX_COUNT_ITEMS = 60;
 
 /* ================================================================
    クール宅急便を取り扱えない地域

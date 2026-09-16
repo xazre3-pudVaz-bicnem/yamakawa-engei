@@ -260,7 +260,12 @@ for (const combo of COMBOS) {
   /* --- (a) 商品データから直接 --- */
   const lines: ShippingLine[] = combo.order.map(({ slug, quantity }) => {
     const product = getProduct(slug)!;
-    return { name: product.name, weightGrams: product.weightGrams, quantity };
+    return {
+      name: product.name,
+      quantity,
+      weightGrams: product.weightGrams,
+      maxPerParcel: product.maxPerParcel,
+    };
   });
   const plan = planParcels(lines);
 
@@ -320,13 +325,13 @@ console.log("\n■ 送料が「商品点数」ではなく「個口数」で決�
 {
   // 商品3点だが1個口 → 1個口分の送料
   const oneParcel = quoteShipping(PREF, [
-    { name: "生ライチ 500g", weightGrams: 500, quantity: 1 },
-    { name: "生ライチ 350g", weightGrams: 350, quantity: 2 },
+    { name: "生ライチ 500g", quantity: 1, weightGrams: 500, maxPerParcel: null },
+    { name: "生ライチ 350g", quantity: 2, weightGrams: 350, maxPerParcel: null },
   ]);
   // 商品3点で2個口 → 2個口分の送料
   const twoParcels = quoteShipping(PREF, [
-    { name: "生ライチ 500g", weightGrams: 500, quantity: 2 },
-    { name: "生ライチ 350g", weightGrams: 350, quantity: 1 },
+    { name: "生ライチ 500g", quantity: 2, weightGrams: 500, maxPerParcel: null },
+    { name: "生ライチ 350g", quantity: 1, weightGrams: 350, maxPerParcel: null },
   ]);
 
   if (oneParcel.ok && twoParcels.ok) {
@@ -357,11 +362,11 @@ const PREF_CASES: Array<{ pref: string; region: string; unit: number }> = [
 
 // 1個口になる注文と、2個口になる注文
 const ONE: ShippingLine[] = [
-  { name: "生ライチ 500g", weightGrams: 500, quantity: 2 },
+  { name: "生ライチ 500g", quantity: 2, weightGrams: 500, maxPerParcel: null },
 ];
 const TWO: ShippingLine[] = [
-  { name: "生ライチ 500g", weightGrams: 500, quantity: 2 },
-  { name: "生ライチ 350g", weightGrams: 350, quantity: 1 },
+  { name: "生ライチ 500g", quantity: 2, weightGrams: 500, maxPerParcel: null },
+  { name: "生ライチ 350g", quantity: 1, weightGrams: 350, maxPerParcel: null },
 ];
 
 for (const testCase of PREF_CASES) {
@@ -390,38 +395,38 @@ const badCases: Array<{ label: string; pref: string; lines: ShippingLine[] }> = 
   {
     label: "数量0",
     pref: PREF,
-    lines: [{ name: "生ライチ 500g", weightGrams: 500, quantity: 0 }],
+    lines: [{ name: "生ライチ 500g", quantity: 0, weightGrams: 500, maxPerParcel: null }],
   },
   {
     label: "負の数量",
     pref: PREF,
-    lines: [{ name: "生ライチ 500g", weightGrams: 500, quantity: -1 }],
+    lines: [{ name: "生ライチ 500g", quantity: -1, weightGrams: 500, maxPerParcel: null }],
   },
   {
     label: "小数の数量",
     pref: PREF,
-    lines: [{ name: "生ライチ 500g", weightGrams: 500, quantity: 1.5 }],
+    lines: [{ name: "生ライチ 500g", quantity: 1.5, weightGrams: 500, maxPerParcel: null }],
   },
   {
     label: "重量が未設定",
     pref: PREF,
-    lines: [{ name: "重さ未確認の商品", weightGrams: null, quantity: 1 }],
+    lines: [{ name: "重さ未確認の商品", quantity: 1, weightGrams: null, maxPerParcel: null }],
   },
   {
     label: "上限を超える重さの商品",
     pref: PREF,
-    lines: [{ name: "重すぎる商品", weightGrams: 5000, quantity: 1 }],
+    lines: [{ name: "重すぎる商品", quantity: 1, weightGrams: 5000, maxPerParcel: null }],
   },
   { label: "カートが空", pref: PREF, lines: [] },
   {
     label: "都道府県が空",
     pref: "",
-    lines: [{ name: "生ライチ 500g", weightGrams: 500, quantity: 1 }],
+    lines: [{ name: "生ライチ 500g", quantity: 1, weightGrams: 500, maxPerParcel: null }],
   },
   {
     label: "存在しない都道府県",
     pref: "架空県",
-    lines: [{ name: "生ライチ 500g", weightGrams: 500, quantity: 1 }],
+    lines: [{ name: "生ライチ 500g", quantity: 1, weightGrams: 500, maxPerParcel: null }],
   },
 ];
 
@@ -547,8 +552,8 @@ console.log("\n■ 最大数量（500g×10 ＋ 350g×10）");
 {
   const startedAt = process.hrtime.bigint();
   const quote = quoteShipping(PREF, [
-    { name: "生ライチ 500g", weightGrams: 500, quantity: 10 },
-    { name: "生ライチ 350g", weightGrams: 350, quantity: 10 },
+    { name: "生ライチ 500g", quantity: 10, weightGrams: 500, maxPerParcel: null },
+    { name: "生ライチ 350g", quantity: 10, weightGrams: 350, maxPerParcel: null },
   ]);
   const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
 
@@ -569,6 +574,80 @@ console.log("\n■ 最大数量（500g×10 ＋ 350g×10）");
   } else {
     console.log(`  NG  ${quote.reason}`);
     failed++;
+  }
+}
+
+/* ================================================================
+   13. 個数で上限が決まる商品（南国フルーツ）
+   ---------------------------------------------------------------
+   ライチは重さで詰めるが、龍眼・ホワイトサポテ・スターフルーツは
+   「〇個までなら1個口」と個数で伺っている。
+   単品のときは伺った上限どおりになること、
+   混ざったときに少なく見積もらないことを確かめる。
+================================================================ */
+console.log("\n■ 個数で上限が決まる商品（お届け先＝東京都）");
+{
+  const line = (slug: string, quantity: number): ShippingLine => {
+    const product = getProduct(slug)!;
+    return {
+      name: product.name,
+      quantity,
+      weightGrams: product.weightGrams,
+      maxPerParcel: product.maxPerParcel,
+    };
+  };
+
+  const cases: Array<{
+    label: string;
+    order: Array<[string, number]>;
+    parcels: number;
+  }> = [
+    // [確認済] 農園より「〇個までなら1個口」
+    { label: "龍眼×6", order: [["ryugan-100g", 6]], parcels: 1 },
+    { label: "龍眼×7", order: [["ryugan-100g", 7]], parcels: 2 },
+    { label: "ホワイトサポテ×6", order: [["white-sapote-150g", 6]], parcels: 1 },
+    { label: "ホワイトサポテ×7", order: [["white-sapote-150g", 7]], parcels: 2 },
+    { label: "スターフルーツ×8", order: [["starfruit", 8]], parcels: 1 },
+    { label: "スターフルーツ×9", order: [["starfruit", 9]], parcels: 2 },
+    // 混載は伺っていないため、占有率の合計で見積もる
+    {
+      label: "龍眼×3 ＋ サポテ×3",
+      order: [
+        ["ryugan-100g", 3],
+        ["white-sapote-150g", 3],
+      ],
+      parcels: 1,
+    },
+    {
+      label: "龍眼×6 ＋ サポテ×6",
+      order: [
+        ["ryugan-100g", 6],
+        ["white-sapote-150g", 6],
+      ],
+      parcels: 2,
+    },
+    // ライチ（重さ）と南国果実（個数）は根拠が別なので、個口を分けて数える
+    {
+      label: "ライチ500g×2 ＋ 龍眼×6",
+      order: [
+        ["nama-lychee-500g", 2],
+        ["ryugan-100g", 6],
+      ],
+      parcels: 2,
+    },
+  ];
+
+  for (const testCase of cases) {
+    const lines = testCase.order.map(([slug, quantity]) => line(slug, quantity));
+    const quote = quoteShipping(PREF, lines);
+    const ok =
+      quote.ok &&
+      quote.parcels === testCase.parcels &&
+      quote.amount === UNIT_RATE * testCase.parcels;
+    if (!ok) failed++;
+    console.log(
+      `  ${ok ? "OK " : "NG "} ${pad(testCase.label, 30)} ${quote.ok ? quote.parcels : "-"}個口 ${yen(quote.ok ? quote.amount : 0).padStart(8)}  期待=${testCase.parcels}個口`,
+    );
   }
 }
 

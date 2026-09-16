@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Reveal from "@/components/ui/Reveal";
 import { currentSales, salesStatus, siteConfig } from "@/data/siteConfig";
+import { hasBuyableProducts } from "@/data/products";
 import { getLatestNews, newsCategoryLabel } from "@/data/news";
 import { formatDateDot } from "@/lib/utils";
 
@@ -10,9 +11,15 @@ import { formatDateDot } from "@/lib/utils";
  * 文言は data/siteConfig.ts の salesStatus.phase を書き換えるだけで変わる。
  *   "on_sale"（販売中）／"preorder"（予約受付中）
  *   ／"coming_soon"（近日販売開始）／"closed"（今季販売終了）
+ *
+ * ★ここはライチの話★
+ * ライチが終わっていても、ほかの果物を販売していることがある。
+ * サイト全体が「販売終了」に見えないよう、
+ * 買える商品があるときは、そちらへの案内を必ず添える。
  */
 export default function SalesStatusSection() {
   const latestNews = getLatestNews(2);
+  const otherFruitsOnSale = salesStatus.phase === "closed" && hasBuyableProducts();
 
   return (
     <section
@@ -24,7 +31,7 @@ export default function SalesStatusSection() {
           <div>
             <div className="flex flex-wrap items-center gap-4">
               <span className="inline-flex items-center border border-lychee/40 bg-lychee-soft/45 px-3.5 py-1 text-[0.72rem] tracking-[0.14em] text-lychee-deep">
-                {currentSales.label}
+                ライチ：{currentSales.label}
               </span>
               <span className="text-[0.78rem] tracking-[0.06em] text-moss">
                 {salesStatus.saleStartDate
@@ -43,14 +50,26 @@ export default function SalesStatusSection() {
             <p className="mt-5 max-w-[40rem] text-[0.93rem] leading-[2.05] text-ink/80">
               {currentSales.body}
             </p>
+
+            {otherFruitsOnSale ? (
+              <p className="mt-5 max-w-[40rem] text-[0.93rem] leading-[2.05] text-forest">
+                ライチ以外の果物は、いまお届けできるものがあります。
+                <Link
+                  href="/shop"
+                  className="ml-1 text-lychee-deep underline underline-offset-4 hover:text-lychee"
+                >
+                  今季お届けできる果物を見る
+                </Link>
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-4">
             <Link
-              href={currentSales.ctaHref}
+              href={otherFruitsOnSale ? "/shop" : currentSales.ctaHref}
               className="inline-flex items-center justify-center border border-lychee bg-lychee px-8 py-3.5 text-[0.9rem] tracking-[0.1em] text-white transition-colors duration-300 hover:border-lychee-deep hover:bg-lychee-deep"
             >
-              {currentSales.ctaLabel}
+              {otherFruitsOnSale ? "オンラインショップ" : currentSales.ctaLabel}
             </Link>
             <a
               href={siteConfig.instagram.url}

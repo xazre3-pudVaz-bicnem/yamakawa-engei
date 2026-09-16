@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/CartProvider";
 import { currentSales, salesStatus } from "@/data/siteConfig";
-import { isBuyable } from "@/data/products";
+import { hasBuyableProducts, isBuyable } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 
 /**
@@ -29,6 +29,8 @@ export default function MobileBuyBar() {
   if (hidden) return null;
 
   const hasItems = isReady && totalQuantity > 0;
+  /** いま買える商品があるか（ライチが終わっていても、ほかの果物があることがある） */
+  const onSale = hasBuyableProducts();
   /** カートに買えない商品が入っているか */
   const hasUnavailable = lines.some(({ product }) => !isBuyable(product));
 
@@ -77,17 +79,17 @@ export default function MobileBuyBar() {
           <>
             <div className="min-w-0 flex-1">
               <p className="text-[0.7rem] tracking-[0.1em] text-lychee-deep">
-                {currentSales.label}
+                {onSale ? "お届けできます" : `ライチ：${currentSales.label}`}
               </p>
               <p className="truncate text-[0.82rem] text-moss">
-                旬は{salesStatus.seasonLabel}
+                {onSale ? "季節の南国フルーツ" : `旬は${salesStatus.seasonLabel}`}
               </p>
             </div>
             <Link
-              href={currentSales.ctaHref}
+              href={onSale ? "/shop" : currentSales.ctaHref}
               className="shrink-0 border border-lychee bg-lychee px-6 py-3 text-[0.85rem] tracking-[0.06em] text-white"
             >
-              {currentSales.ctaLabel}
+              {onSale ? "商品を見る" : currentSales.ctaLabel}
             </Link>
           </>
         )}

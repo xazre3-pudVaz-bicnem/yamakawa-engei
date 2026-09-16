@@ -88,9 +88,10 @@ export function validateOrder(input: unknown): ValidationResult {
       };
     }
 
-    // 重量が無いと個口数＝送料を計算できない。
+    // 個口数＝送料を計算できる根拠が要る。
+    // 「重さで詰める」か「1個口に何個入るか」のどちらかが分かっていること。
     // 架空の送料で受け付けるくらいなら、ここで止める。
-    if (product.weightGrams === null) {
+    if (product.weightGrams === null && product.maxPerParcel === null) {
       return {
         ok: false,
         status: 409,
@@ -167,8 +168,9 @@ export function validateOrder(input: unknown): ValidationResult {
 export function toShippingLines(lines: ValidatedLine[]): ShippingLine[] {
   return lines.map((line) => ({
     name: line.product.name,
-    weightGrams: line.product.weightGrams,
     quantity: line.quantity,
+    weightGrams: line.product.weightGrams,
+    maxPerParcel: line.product.maxPerParcel,
   }));
 }
 
@@ -203,8 +205,9 @@ export function decodeOrderItems(raw: string | undefined | null): ShippingLine[]
 
     lines.push({
       name: product.name,
-      weightGrams: product.weightGrams,
       quantity,
+      weightGrams: product.weightGrams,
+      maxPerParcel: product.maxPerParcel,
     });
   }
 

@@ -70,8 +70,9 @@ export default function CartContents() {
   const plan = planParcels(
     lines.map(({ product, quantity }) => ({
       name: product.name,
-      weightGrams: product.weightGrams,
       quantity,
+      weightGrams: product.weightGrams,
+      maxPerParcel: product.maxPerParcel,
     })),
   );
 
