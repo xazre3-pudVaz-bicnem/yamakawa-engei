@@ -597,6 +597,13 @@ console.log("\n■ 個数で上限が決まる商品（お届け先＝東京都�
     };
   };
 
+  /** 販売していない商品でも梱包条件は検証したいので、直接組み立てる */
+  const raw = (
+    name: string,
+    quantity: number,
+    maxPerParcel: number,
+  ): ShippingLine => ({ name, quantity, weightGrams: null, maxPerParcel });
+
   const cases: Array<{
     label: string;
     order: Array<[string, number]>;
@@ -605,27 +612,8 @@ console.log("\n■ 個数で上限が決まる商品（お届け先＝東京都�
     // [確認済] 農園より「〇個までなら1個口」
     { label: "龍眼×6", order: [["ryugan-100g", 6]], parcels: 1 },
     { label: "龍眼×7", order: [["ryugan-100g", 7]], parcels: 2 },
-    { label: "ホワイトサポテ×6", order: [["white-sapote-150g", 6]], parcels: 1 },
-    { label: "ホワイトサポテ×7", order: [["white-sapote-150g", 7]], parcels: 2 },
-    { label: "スターフルーツ×8", order: [["starfruit", 8]], parcels: 1 },
-    { label: "スターフルーツ×9", order: [["starfruit", 9]], parcels: 2 },
-    // 混載は伺っていないため、占有率の合計で見積もる
-    {
-      label: "龍眼×3 ＋ サポテ×3",
-      order: [
-        ["ryugan-100g", 3],
-        ["white-sapote-150g", 3],
-      ],
-      parcels: 1,
-    },
-    {
-      label: "龍眼×6 ＋ サポテ×6",
-      order: [
-        ["ryugan-100g", 6],
-        ["white-sapote-150g", 6],
-      ],
-      parcels: 2,
-    },
+    { label: "スターフルーツ×6", order: [["starfruit", 6]], parcels: 1 },
+    { label: "スターフルーツ×7", order: [["starfruit", 7]], parcels: 2 },
     // ライチ（重さ）と南国果実（個数）は根拠が別なので、個口を分けて数える
     {
       label: "ライチ500g×2 ＋ 龍眼×6",
@@ -637,8 +625,32 @@ console.log("\n■ 個数で上限が決まる商品（お届け先＝東京都�
     },
   ];
 
-  for (const testCase of cases) {
-    const lines = testCase.order.map(([slug, quantity]) => line(slug, quantity));
+  /* 混載の個口数 [確認済] 2026年9月17日 農園より
+     「竜眼3＋サポテ3 ⇔ 1個口／竜眼6＋サポテ6 ⇔ 2個口 の認識であってます」
+     ホワイトサポテは販売を中止したが、混載の考え方が正しいことの
+     裏づけとして、条件を直接書いて残しておく。 */
+  const mixed: Array<{ label: string; lines: ShippingLine[]; parcels: number }> = [
+    {
+      label: "龍眼×3 ＋ サポテ×3",
+      lines: [raw("龍眼", 3, 6), raw("ホワイトサポテ", 3, 6)],
+      parcels: 1,
+    },
+    {
+      label: "龍眼×6 ＋ サポテ×6",
+      lines: [raw("龍眼", 6, 6), raw("ホワイトサポテ", 6, 6)],
+      parcels: 2,
+    },
+  ];
+
+  for (const testCase of [
+    ...cases.map((c) => ({
+      label: c.label,
+      lines: c.order.map(([slug, quantity]) => line(slug, quantity)),
+      parcels: c.parcels,
+    })),
+    ...mixed,
+  ]) {
+    const lines = testCase.lines;
     const quote = quoteShipping(PREF, lines);
     const ok =
       quote.ok &&

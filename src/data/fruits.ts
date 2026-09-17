@@ -822,10 +822,11 @@ export const fruits: Fruit[] = [
 
     // [確認済] 2026年9月13日 農園からのメモ
     harvestSeason: "8月下旬から10月ごろまで",
+    // [確認済] 2026年9月17日 仕入れ先の都合により販売を中止
     sales: {
-      status: "inquiry",
-      packSize: "200gパック",
-      note: "数に限りがありますが、ご用意できる場合があります。",
+      status: "none",
+      packSize: null,
+      note: null,
     },
     productSlug: null,
 

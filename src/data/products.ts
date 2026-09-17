@@ -520,6 +520,11 @@ export const products: Product[] = [
     shortName: "完熟ホワイトサポテ",
     category: "tropical-fruit",
 
+    // ★販売中止★ [確認済] 2026年9月17日 農園より
+    //   仕入れ先の都合で販売を中止。draft のあいだは
+    //   一覧・商品ページ・sitemap・商品フィードのすべてに出ない。
+    //   再開するときは availability を "in_stock" に戻すだけでよい。
+
     price: 400, // [確認済] 売価
     taxIncluded: true,
     priceNote: "表示価格は税込です。送料は別途かかります。",
@@ -529,7 +534,7 @@ export const products: Product[] = [
     maxPerParcel: 6, // [確認済] ホワイトサポテのみなら6個まで1個口
     countGuide: null,
 
-    availability: "in_stock",
+    availability: "draft",
     maxQuantity: 6,
 
     saleStart: null,
@@ -603,7 +608,8 @@ export const products: Product[] = [
      スターフルーツ（櫻井植物園）
      [確認済] 2026年9月16日 農園より
        売価 1個400円／10月〜4、5月まで販売
-       スターフルーツのみだと60サイズに、最大8個までなら1個口
+       スターフルーツのみだと60サイズに、最大6個までなら1個口
+       （2026年9月17日に8個から6個へ変更）
        櫻井植物園のものを販売する。写真も櫻井植物園から
   ────────────────────────────────────────────── */
   {
@@ -619,12 +625,15 @@ export const products: Product[] = [
 
     volume: "1個", // [確認済]
     weightGrams: null, // [TODO] 1個あたりの重さは伺っていない
-    maxPerParcel: 8, // [確認済] スターフルーツのみなら8個まで1個口
+    // [確認済] 2026年9月17日 農園より 8個→6個に変更
+    //   「箱には8個まで入る見積もりでしたが、クール袋に入れ、
+    //     保冷剤をいれるときついかも」とのこと
+    maxPerParcel: 6,
     countGuide: null,
 
     // ★10月から販売開始★ 時期が来たら "in_stock" に切り替える
     availability: "coming_soon",
-    maxQuantity: 8,
+    maxQuantity: 6,
 
     saleStart: null, // [TODO] 今季の販売開始日（10月のいつからか）
     saleEnd: null,
