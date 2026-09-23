@@ -434,6 +434,11 @@ export default async function FruitPage({
               <p className="mt-5 text-[0.92rem] leading-[2] text-paper/80">
                 {formatPrice(product.price)}（税込・送料別）
               </p>
+              {fruit.sales.note ? (
+                <p className="mx-auto mt-5 max-w-xl text-[0.86rem] leading-[1.95] text-paper/70">
+                  {fruit.sales.note}
+                </p>
+              ) : null}
               <Link
                 href={`/products/${product.slug}`}
                 className="mt-9 inline-flex items-center justify-center border border-lychee bg-lychee px-9 py-4 text-[0.92rem] tracking-[0.1em] text-white transition-colors duration-300 hover:border-lychee-deep hover:bg-lychee-deep"

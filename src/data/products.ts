@@ -420,6 +420,10 @@ export const products: Product[] = [
      [確認済] 2026年9月16日 農園より
        売価 1P100g 400円／9月〜10月頃まで販売
        龍眼のみだと60サイズに、最大6個までなら1個口
+     [確認済] 2026年9月23日 櫻井植物園さまとご契約
+       オンラインショップでお出しするのは櫻井植物園さまの品物。
+       山川園芸のハウスでも龍眼は育てているが、商品としてお届けするのは
+       櫻井植物園さまのもの。どちらが育てたのかを必ず明記すること。
   ────────────────────────────────────────────── */
   {
     id: "longan-100g",
@@ -448,9 +452,11 @@ export const products: Product[] = [
     shippingMethod:
       "ヤマト運輸のクール便（冷蔵）でお届けします。保冷バッグと保冷剤をお入れします。", // [確認済]
 
-    origin: siteConfig.origin,
-    producerNote: null,
-    photoCredit: null,
+    // [確認済] お届けするのは櫻井植物園さまで育てられたもの
+    origin: "櫻井植物園",
+    producerNote:
+      "この龍眼は、櫻井植物園で育てられたものを山川園芸がお届けします。",
+    photoCredit: "木の写真は櫻井植物園よりご提供いただきました。",
 
     storage:
       "ポリ袋などに入れて冷蔵庫で保存し、5〜7日を目安にお召し上がりください。追熟しないため、届いたらお早めにどうぞ。",
@@ -461,9 +467,10 @@ export const products: Product[] = [
     lead: "ライチと同じムクロジ科。薄茶色の皮をむくと、半透明の白い果肉があらわれます。",
 
     description: [
-      "指宿・山川のハウスで育てた龍眼です。枝先に房になって実り、樹の上で完熟させてから収穫します。",
+      "枝先に房になって実る龍眼です。樹の上で完熟させてから収穫します。",
       "薄い皮は手でかんたんにむけます。中から出てくるのは、半透明の白い果肉。果肉越しに透ける黒い種が龍の目のように見えることが、名前の由来とされています。",
       "木から外すとそれ以上甘くなりません。届いたら、冷やしてお早めに召し上がってください。",
+      "こちらの商品は、櫻井植物園で育てられた龍眼を山川園芸がお届けするものです。山川園芸のハウスでも龍眼を育てていますが、オンラインショップでお出ししているのは櫻井植物園の品物です。",
     ],
 
     features: [
@@ -491,9 +498,9 @@ export const products: Product[] = [
         slot: "products/longan/peeled.jpg",
       },
       {
-        src: "/images/fruits/longan/cluster-hires.jpg",
-        alt: "山川園芸で枝から下がる龍眼の実の房",
-        slot: "fruits/longan/cluster-hires.jpg",
+        src: "/images/sakurai/longan-cluster-1.jpg",
+        alt: "櫻井植物園で枝から下がる龍眼の実の房",
+        slot: "sakurai/longan-cluster-1.jpg",
       },
       {
         src: "/images/products/longan/in-box.jpg",
@@ -631,8 +638,8 @@ export const products: Product[] = [
     maxPerParcel: 6,
     countGuide: null,
 
-    // ★10月から販売開始★ 時期が来たら "in_stock" に切り替える
-    availability: "coming_soon",
+    // [確認済] 2026年9月23日 櫻井植物園さまとご契約。販売開始
+    availability: "in_stock",
     maxQuantity: 6,
 
     saleStart: null, // [TODO] 今季の販売開始日（10月のいつからか）

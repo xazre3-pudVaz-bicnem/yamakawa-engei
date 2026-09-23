@@ -84,7 +84,11 @@ export default async function ProductPage({
   const specs: Array<{ term: string; value: string | null }> = [
     { term: "内容量", value: product.volume },
     { term: "個数の目安", value: product.countGuide },
-    { term: "産地", value: product.origin },
+    {
+      // ほかの農園のものをお届けする商品では、場所ではなく育てた人を示す
+      term: product.producerNote ? "生産者" : "産地",
+      value: product.origin,
+    },
     {
       term: "品種",
       value: product.showVarieties
@@ -125,7 +129,17 @@ export default async function ProductPage({
       {/* ================= 購入エリア ================= */}
       <section className="mx-auto w-full max-w-6xl px-5 py-10 md:px-8 md:py-14">
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-          <ProductGallery images={product.images} productName={product.name} />
+          <div>
+            <ProductGallery
+              images={product.images}
+              productName={product.name}
+            />
+            {product.photoCredit ? (
+              <p className="mt-3 text-[0.78rem] leading-[1.8] text-moss">
+                {product.photoCredit}
+              </p>
+            ) : null}
+          </div>
 
           <div className="lg:sticky lg:top-28 lg:self-start">
             <StatusBadge status={product.availability} />
@@ -137,6 +151,14 @@ export default async function ProductPage({
             <p className="mt-5 text-[0.95rem] leading-[2.05] text-ink/85">
               {product.lead}
             </p>
+
+            {/* ほかの農園が育てたものをお届けする商品は、
+                買う前に必ず分かるよう、価格の前に置く */}
+            {product.producerNote ? (
+              <p className="mt-6 border-l-2 border-leaf bg-leaf-pale/30 px-5 py-4 text-[0.88rem] leading-[1.95] text-forest">
+                {product.producerNote}
+              </p>
+            ) : null}
 
             <div className="mt-8 border-y border-ink/12 py-6">
               <p className="flex flex-wrap items-baseline gap-x-3">

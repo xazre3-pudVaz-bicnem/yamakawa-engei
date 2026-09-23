@@ -606,13 +606,16 @@ export const fruits: Fruit[] = [
     sourcesCheckedAt: "2026-09-13",
 
     harvestSeason: null, // [TODO] 山川園芸での収穫時期
-    // [確認済] 2026年9月13日 農園からのメモ「龍眼は少し販売できます」
+    // [確認済] 2026年9月23日 櫻井植物園さまとご契約
+    //   このページは山川園芸のハウスで育てている龍眼の話。
+    //   オンラインショップでお出ししているのは櫻井植物園さまの品物なので、
+    //   取り違えないよう note で必ず断る。
     sales: {
-      status: "inquiry",
+      status: "online",
       packSize: "100gパック",
-      note: "数に限りがありますが、ご用意できる場合があります。",
+      note: "オンラインショップでお出ししている龍眼は、櫻井植物園で育てられたものです。",
     },
-    productSlug: null,
+    productSlug: "ryugan-100g",
 
     related: [
       { href: "/lychee", label: "仲間のライチについて、ライチ完全ガイドで読む" },
@@ -899,7 +902,8 @@ export function fruitAvailabilityFaq(fruit: Fruit): {
   if (fruit.sales.status === "online" && product) {
     return {
       question: `山川園芸の${fruit.name}は買えますか？`,
-      answer: `オンラインショップで「${product.name}」をお取り扱いしています。`,
+      // 誰が育てたものかを、よくある質問でも取り違えないようにする
+      answer: `オンラインショップで「${product.name}」をお取り扱いしています。${fruit.sales.note ? `${fruit.sales.note}` : ""}`,
     };
   }
 

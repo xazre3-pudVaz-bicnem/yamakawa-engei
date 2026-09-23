@@ -63,6 +63,13 @@ export default function ProductRow({
           {product.lead}
         </p>
 
+        {/* ほかの農園が育てたものは、一覧の時点で分かるようにする */}
+        {product.producerNote ? (
+          <p className="mt-4 text-[0.84rem] leading-[1.9] text-forest">
+            {product.producerNote}
+          </p>
+        ) : null}
+
         <dl className="mt-7 space-y-2 border-t border-ink/12 pt-6 text-[0.85rem]">
           {product.volume && (
             <div className="flex gap-4">
@@ -74,7 +81,9 @@ export default function ProductRow({
             </div>
           )}
           <div className="flex gap-4">
-            <dt className="w-20 shrink-0 text-moss">産地</dt>
+            <dt className="w-20 shrink-0 text-moss">
+              {product.producerNote ? "生産者" : "産地"}
+            </dt>
             <dd>{product.origin}</dd>
           </div>
           <div className="flex items-baseline gap-4">
