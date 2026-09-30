@@ -254,7 +254,8 @@ export default function Header() {
         </Link>
 
         <div className="mt-8 space-y-2 text-[0.82rem] leading-[1.9] text-cream/60">
-          <p>{siteConfig.address.full}</p>
+          {/* 番地は出さない（所在地は農園・アクセスのページに） */}
+          <p>{siteConfig.origin}</p>
           <p>
             <a href={siteConfig.phoneHref} className="underline underline-offset-4">
               {siteConfig.phone}

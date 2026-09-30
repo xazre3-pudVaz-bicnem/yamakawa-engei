@@ -26,15 +26,16 @@ export default function Footer() {
 
             <address className="mt-8 space-y-2.5 text-[0.85rem] not-italic leading-[1.9] text-cream/75">
               <p>{siteConfig.name}（代表 {siteConfig.owner}）</p>
+              {/* 番地はここに出さない。
+                  Googleマップへのリンクもアドレスに番地が入るため置かない。
+                  所在地と地図は「農園・アクセス」と特定商取引法の表記にある */}
               <p>
-                <a
-                  href={siteConfig.googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/access"
                   className="underline underline-offset-4 hover:text-cream"
                 >
-                  {siteConfig.address.full}
-                </a>
+                  {siteConfig.origin}
+                </Link>
               </p>
               <p>
                 <a
