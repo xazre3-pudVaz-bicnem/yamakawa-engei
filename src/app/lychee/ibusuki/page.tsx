@@ -25,7 +25,7 @@ export default function IbusukiPage() {
       farmNote={
         <FarmNote title="指宿市山川で育てています">
           <p>
-            山川園芸の所在地は{siteConfig.address.full}です。
+            山川園芸は{siteConfig.origin}にあります。
             ライチをはじめとする熱帯性の果樹を育てています。
           </p>
           <p>
@@ -97,7 +97,7 @@ export default function IbusukiPage() {
 
         <h2>農園の場所</h2>
         <p>
-          {siteConfig.address.full}。
+          {siteConfig.origin}。
           鹿児島市内から南へ、指宿市の中心部をさらに越えた先にあります。
         </p>
         <p>

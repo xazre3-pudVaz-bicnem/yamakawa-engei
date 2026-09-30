@@ -123,7 +123,7 @@ export default async function BlogPostPage({
             >
               {siteConfig.name}
             </Link>
-            （{siteConfig.address.full}）
+            （{siteConfig.origin}）
           </p>
         </header>
 

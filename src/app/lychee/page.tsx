@@ -47,7 +47,7 @@ export default function LycheeGuidePage() {
       farmNote={
         <FarmNote title="このガイドを書いている農園について">
           <p>
-            山川園芸は{siteConfig.address.full}にある農園です。
+            山川園芸は{siteConfig.origin}にある農園です。
             ハウスでライチをはじめとする熱帯性の果樹を育てています。
           </p>
           <p>

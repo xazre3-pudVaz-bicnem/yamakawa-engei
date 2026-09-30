@@ -91,7 +91,7 @@ export default function GuideLayout({
               >
                 {siteConfig.name}
               </Link>
-              （{siteConfig.address.full}）
+              （{siteConfig.origin}）
             </span>
             <span className="tnum">
               <time dateTime={page.updatedAt}>

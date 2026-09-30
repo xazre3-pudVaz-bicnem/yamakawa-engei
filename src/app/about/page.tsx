@@ -37,7 +37,7 @@ export default function AboutPage() {
             熱帯の果樹を育てています。
           </>
         }
-        lead={`${siteConfig.name}／代表 ${siteConfig.owner}　${siteConfig.address.full}`}
+        lead={`${siteConfig.name}／代表 ${siteConfig.owner}　${siteConfig.origin}`}
         crumbs={[{ name: "山川園芸について", path: "/about" }]}
       />
 

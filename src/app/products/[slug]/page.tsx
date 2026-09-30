@@ -378,7 +378,7 @@ export default async function ProductPage({
               つくっているのは、{siteConfig.name}です
             </h2>
             <p className="mt-6 text-[0.93rem] leading-[2.05] text-ink/85">
-              薩摩半島のいちばん南、{siteConfig.address.full}。
+              薩摩半島のいちばん南、{siteConfig.origin}。
               海に囲まれたこの土地で、ライチをはじめとする熱帯果樹を育てています。
               穫れた実は、市場を通さず農園から直接お届けしています。
             </p>

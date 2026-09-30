@@ -47,9 +47,11 @@ export default function FarmNote({
         {children}
       </div>
       <p className="mt-5 text-[0.78rem] leading-[1.8] text-moss">
+        {/* 記事の中に番地までは出さない。
+            所在地は、フッター・特定商取引法の表記・農園ページに載せている */}
         {fromProducer
           ? `${siteConfig.name}／${siteConfig.owner}`
-          : `${siteConfig.name}（${siteConfig.address.full}）`}
+          : `${siteConfig.name}（${siteConfig.origin}）`}
       </p>
     </aside>
   );

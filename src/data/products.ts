@@ -202,7 +202,7 @@ export const lycheeVarieties: Array<{ period: string; names: string[] }> = [
   { period: "7月ごろ", names: ["三月紅", "在来種（佐多、黒葉）"] },
   {
     period: "8月ごろ",
-    names: ["宮崎ライチと呼ばれる種", "桂味", "ノーマイチー"],
+    names: ["ジャカパット", "桂味", "ノーマイチー"],
   },
 ];
 

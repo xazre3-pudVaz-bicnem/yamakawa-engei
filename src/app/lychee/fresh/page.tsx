@@ -26,7 +26,7 @@ export default function FreshPage() {
       farmNote={
         <FarmNote title="産地から直接お送りしています">
           <p>
-            山川園芸は{siteConfig.address.full}でライチを育てています。
+            山川園芸は{siteConfig.origin}でライチを育てています。
             穫れた実は市場や仲卸を通さず、農園から直接お送りしています。
           </p>
           <p>

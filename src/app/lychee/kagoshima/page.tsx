@@ -33,7 +33,7 @@ export default function KagoshimaPage() {
       farmNote={
         <FarmNote title="山川園芸のライチ">
           <p>
-            山川園芸は{siteConfig.address.full}にある農園です。
+            山川園芸は{siteConfig.origin}にある農園です。
             ハウスでライチをはじめとする熱帯性の果樹を育てています。
           </p>
           <p>

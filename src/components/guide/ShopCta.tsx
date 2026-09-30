@@ -73,7 +73,7 @@ export default function ShopCta({
           {onSale ? (
             <>
               <p className="mt-4 text-[0.92rem] leading-[2] text-ink/85">
-                {siteConfig.address.full}の農園から、旬のあいだだけ産地直送でお届けしています。
+                {siteConfig.origin}の農園から、旬のあいだだけ産地直送でお届けしています。
                 お届けできるのは{salesStatus.seasonLabel}までです。
               </p>
 
