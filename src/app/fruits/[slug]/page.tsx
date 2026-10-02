@@ -421,6 +421,8 @@ export default async function FruitPage({
 
       {/* ---- お取り扱い ----
           online  … 商品へ（赤＝購入導線）
+                    ただし products.ts 側がまだ買える状態でなければ（draft・
+                    売り切れ）、下の「ご相談」の表示に落ちる
           inquiry … 価格が決まっていないので、買い物かごへは進ませず
                     お電話・お問い合わせでご相談を承る
           none    … 販売しないことを伝えて、山川園芸のライチへつなぐ */}
@@ -448,7 +450,7 @@ export default async function FruitPage({
             </Reveal>
           </div>
         </section>
-      ) : fruit.sales.status === "inquiry" ? (
+      ) : fruit.sales.status !== "none" ? (
         <section className="bg-forest-deep text-paper">
           <div className="mx-auto w-full max-w-4xl px-5 py-20 text-center md:px-8 md:py-24">
             <Reveal>

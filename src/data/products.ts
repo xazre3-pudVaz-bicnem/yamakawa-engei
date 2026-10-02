@@ -110,6 +110,15 @@ export type Product = {
   availability: ProductAvailability;
   /** 1回のご注文で選べる最大数量 */
   maxQuantity: number;
+  /**
+   * 今季ご用意できる総数（限定販売の「残り〇個」ではない）。
+   *
+   * 画面には「今季は〇個限定」とだけ出す。
+   * このサイトは売れた数を数えていないため、ここの数字は自動で減らない。
+   * 売り切れたら availability を "sold_out" に切り替えること。
+   * 限定でないものは null。
+   */
+  limitedStock: number | null;
 
   /** 販売開始日（ISO文字列）。未定なら null */
   saleStart: string | null;
@@ -238,6 +247,7 @@ export const products: Product[] = [
     // "in_stock" | "preorder" | "sold_out" | "coming_soon" | "draft"
     availability: "sold_out",
     maxQuantity: 10,
+    limitedStock: null,
 
     saleStart: null, // [TODO] 今季の販売開始日
     saleEnd: null, // [TODO] 今季の販売終了日
@@ -347,6 +357,7 @@ export const products: Product[] = [
     // ★販売状況はここで切り替える★
     availability: "sold_out",
     maxQuantity: 10,
+    limitedStock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -444,6 +455,7 @@ export const products: Product[] = [
     // ★販売状況はここで切り替える★
     availability: "in_stock",
     maxQuantity: 6,
+    limitedStock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -543,6 +555,7 @@ export const products: Product[] = [
 
     availability: "draft",
     maxQuantity: 6,
+    limitedStock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -641,6 +654,7 @@ export const products: Product[] = [
     // [確認済] 2026年9月23日 櫻井植物園さまとご契約。販売開始
     availability: "in_stock",
     maxQuantity: 6,
+    limitedStock: null,
 
     saleStart: null, // [TODO] 今季の販売開始日（10月のいつからか）
     saleEnd: null,
@@ -707,6 +721,110 @@ export const products: Product[] = [
     condition: "new",
     gtin: null,
     relatedSlugs: ["ryugan-100g", "white-sapote-150g"],
+  },
+
+  /* ──────────────────────────────────────────────
+     ドラゴンフルーツ（山川園芸）
+     [確認済] 2026年10月2日 農園より
+       「1個 400g 600円です」
+       「1個が、400gに満たない場合は、1個分のパッケージに400g以上に
+         なるようにドラゴンフルーツを複数個入れる場合があります」
+       とりあえず5パックの限定販売
+     [TODO] 1個口（60サイズ）に何パックまで入るか
+       → 伺えるまで availability は "draft" のままにすること。
+         個口数を計算する根拠がないため、公開すると送料を誤る。
+         ライチの1個口上限（1,200g）は350g・500gのパックで伺った条件なので、
+         ドラゴンフルーツに当てはめてはいけない。
+     [TODO] 常温便かクール便か
+       （ハワイ大学の資料では6℃で低温障害。冷蔵でよいか確認が必要）
+  ────────────────────────────────────────────── */
+  {
+    id: "dragon-fruit-1",
+    slug: "dragon-fruit-400g",
+    name: "ドラゴンフルーツ 400g",
+    shortName: "ドラゴンフルーツ",
+    category: "tropical-fruit",
+
+    price: 600, // [確認済] 1パック（400g以上）あたり
+    taxIncluded: true,
+    priceNote: "表示価格は税込です。送料は別途かかります。",
+
+    volume: "1パック 400g以上", // [確認済]
+    // 個数で数える商品（maxPerParcel）。重さでは数えない。
+    weightGrams: null,
+    maxPerParcel: null, // [TODO] 1個口に何パックまで入るか
+    // [確認済] 1個で400gに届かないときは複数個でお詰めする
+    countGuide: "1パックに1〜数個（400g以上になるようお詰めします）",
+
+    // ★販売状況はここで切り替える★
+    // [TODO] maxPerParcel を伺えるまで draft のままにすること
+    availability: "draft",
+    maxQuantity: 5,
+    limitedStock: 5, // [確認済] とりあえず5パックの限定販売
+
+    saleStart: null, // [TODO] 今季の販売開始日
+    saleEnd: null,
+
+    shippingSchedule: "8月下旬から12月ごろまでのお届けです。", // [確認済] 2026年9月13日
+    shippingMethod: null, // [TODO] 常温便かクール便か
+
+    origin: siteConfig.origin,
+    producerNote: null,
+    photoCredit: null,
+
+    // 出典: ハワイ大学 CTAHR（/fruits/dragon-fruit の参考資料と同じ）
+    storage:
+      "10℃前後で保存し、冷やしすぎないようにしてください。追熟しないため、届いたらお早めにお召し上がりください。",
+
+    packaging: null, // [TODO] 包装の形
+    showVarieties: false,
+
+    lead: "サボテンの仲間に実る、あざやかな赤紫の果実。1パック400g以上でお届けします。",
+
+    description: [
+      "山川園芸のハウスで育てたドラゴンフルーツです。ピタヤとも呼ばれます。",
+      "1パック400g以上でお届けします。1個で400gに届かないときは、400g以上になるように複数個をお入れします。",
+      "縦半分に切って、スプーンですくうだけで召し上がれます。果肉に散らばる小さな黒い種は、取り除かずにそのまま食べられます。",
+    ],
+
+    features: [
+      "赤紫の皮に、緑色のうろこのような突起",
+      "種ごと食べられる白い果肉",
+      "切ってスプーンですくうだけ",
+    ],
+
+    eatingSuggestions: [
+      "縦半分に切って、スプーンですくって",
+      "皮をむいて、食べやすい大きさに切って",
+    ],
+
+    cautions: [
+      "果肉が赤いものは、果汁が服や手につくと落ちにくいことがあります。",
+      "追熟しません。お届け後はお早めにお召し上がりください。",
+      siteConfig.giftWrapping.note,
+    ],
+
+    images: [
+      {
+        src: "/images/fruits/dragon-fruit/ripe-closeup.jpg",
+        alt: "山川園芸で赤紫に色づいたドラゴンフルーツの実",
+        slot: "fruits/dragon-fruit/ripe-closeup.jpg",
+      },
+      {
+        src: "/images/fruits/dragon-fruit/halved.jpg",
+        alt: "半分に切ったドラゴンフルーツ。白い果肉に黒い種が散らばっている",
+        slot: "fruits/dragon-fruit/halved.jpg",
+      },
+      {
+        src: "/images/fruits/dragon-fruit/cut-on-plate.jpg",
+        alt: "皿に盛ったドラゴンフルーツ",
+        slot: "fruits/dragon-fruit/cut-on-plate.jpg",
+      },
+    ],
+
+    condition: "new",
+    gtin: null,
+    relatedSlugs: ["ryugan-100g", "starfruit"],
   },
 
 ];

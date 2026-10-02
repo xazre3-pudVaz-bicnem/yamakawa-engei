@@ -77,6 +77,9 @@ export default function ProductRow({
               <dd>
                 {product.volume}
                 {product.countGuide ? `（${product.countGuide}）` : ""}
+                {product.limitedStock !== null
+                  ? `／${product.limitedStock}点限定`
+                  : ""}
               </dd>
             </div>
           )}

@@ -29,7 +29,7 @@ import {
   encodeOrderItems,
   validateOrder,
 } from "../src/lib/order";
-import { getProduct } from "../src/data/products";
+import { getProduct, isBuyable, products } from "../src/data/products";
 import { isPurchasable } from "../src/data/siteConfig";
 
 let failed = 0;
@@ -659,6 +659,33 @@ console.log("\n■ 個数で上限が決まる商品（お届け先＝東京都�
     if (!ok) failed++;
     console.log(
       `  ${ok ? "OK " : "NG "} ${pad(testCase.label, 30)} ${quote.ok ? quote.parcels : "-"}個口 ${yen(quote.ok ? quote.amount : 0).padStart(8)}  期待=${testCase.parcels}個口`,
+    );
+  }
+}
+
+/* ================================================================
+   販売中の商品はすべて個口数を計算できること
+   ---------------------------------------------------------------
+   重さ（weightGrams）も「〇個までなら1個口」（maxPerParcel）も
+   分かっていない商品は、送料を計算する根拠がない。
+   availability を売れる状態に切り替えただけで公開してしまわないよう、
+   ここでビルドを止める。
+================================================================ */
+
+console.log("");
+console.log("● 販売中の商品に梱包の根拠があるか");
+
+for (const product of products) {
+  if (!isBuyable(product)) continue;
+  const hasBasis =
+    product.weightGrams !== null || product.maxPerParcel !== null;
+  check(`${product.name}（${product.slug}）`, hasBasis, true);
+  if (!hasBasis) {
+    console.error(
+      `      → weightGrams か maxPerParcel のどちらかを農園に伺ってから`,
+    );
+    console.error(
+      `        availability を売れる状態にしてください。`,
     );
   }
 }

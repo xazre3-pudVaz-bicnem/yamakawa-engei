@@ -379,12 +379,14 @@ export const fruits: Fruit[] = [
     // [確認済] 2026年9月13日 農園からのメモ
     harvestSeason: "8月下旬から12月ごろまで",
     sales: {
-      // [確認済] ネット販売は現在準備できない。お問い合わせで承る
-      status: "inquiry",
-      packSize: null,
-      note: "オンラインショップでの販売は、ただいま準備中です。",
+      // [確認済] 2026年10月2日 農園より 5パックの限定販売
+      // 実際にカートへ出るかどうかは products.ts の availability で決まる。
+      // draft のあいだは、この下の文章とご相談の導線が表示される。
+      status: "online",
+      packSize: "1パック 400g以上",
+      note: "1パック400g以上でお届けします。1個で400gに届かないときは、400g以上になるように複数個をお入れします。",
     },
-    productSlug: null,
+    productSlug: "dragon-fruit-400g",
 
     related: [
       { href: "/lychee", label: "ライチ完全ガイドを読む" },
@@ -907,13 +909,16 @@ export function fruitAvailabilityFaq(fruit: Fruit): {
     };
   }
 
-  if (fruit.sales.status === "inquiry") {
+  // オンライン販売の予定があってもまだ買えない（下書き・売り切れ）ときは、
+  // 「販売していません」ではなく、ご相談を承る案内にする。
+  // ページ本文の分岐（app/fruits/[slug]/page.tsx）と同じ条件にそろえること。
+  if (fruit.sales.status !== "none") {
     const pack = fruit.sales.packSize
       ? `${fruit.sales.packSize}でのご用意になります。`
       : "";
     return {
       question: `山川園芸の${fruit.name}は買えますか？`,
-      answer: `オンラインショップでのお取り扱いはありませんが、お電話またはお問い合わせよりご相談を承っています。${pack}収穫の状況によってご用意できる数が変わります。`,
+      answer: `ただいまオンラインショップではお求めいただけませんが、お電話またはお問い合わせよりご相談を承っています。${pack}収穫の状況によってご用意できる数が変わります。`,
     };
   }
 
