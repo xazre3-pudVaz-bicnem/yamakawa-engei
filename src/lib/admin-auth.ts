@@ -32,17 +32,38 @@ const SESSION_MS = 12 * 60 * 60 * 1000;
 const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
 const ATTEMPT_LIMIT = 10;
 
+/** 合言葉に必要な長さ */
+const PASSWORD_MIN_LENGTH = 8;
+
 function getPassword(): string | null {
   const value = process.env.ADMIN_PASSWORD?.trim();
   // 短すぎる合言葉は、設定し忘れと同じ扱いにする
-  if (!value || value.length < 8) return null;
+  if (!value || value.length < PASSWORD_MIN_LENGTH) return null;
   return value;
 }
 
-/** 合言葉が設定されているか（画面の案内に使う。値は返さない） */
+/**
+ * 合言葉の設定の状態（画面の案内に使う）。
+ *
+ * 「設定されていない」のか「短すぎる」のかを分けて返す。
+ * どちらも同じ案内だと、設定したのに開けない理由が分からないため。
+ * 合言葉そのものも、その長さも返さない。
+ */
+export type AdminConfigState = "ok" | "missing" | "too_short";
+
+export function adminConfigState(): AdminConfigState {
+  const value = process.env.ADMIN_PASSWORD?.trim();
+  if (!value) return "missing";
+  if (value.length < PASSWORD_MIN_LENGTH) return "too_short";
+  return "ok";
+}
+
+/** 合言葉が設定されているか（値は返さない） */
 export function isAdminConfigured(): boolean {
   return getPassword() !== null;
 }
+
+export { PASSWORD_MIN_LENGTH };
 
 function sign(expiresAt: number, password: string): string {
   return createHmac("sha256", password).update(String(expiresAt)).digest("hex");

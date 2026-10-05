@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { isAdminConfigured, isLoggedIn } from "@/lib/admin-auth";
+import {
+  adminConfigState,
+  isLoggedIn,
+  PASSWORD_MIN_LENGTH,
+} from "@/lib/admin-auth";
 import { getAllStock, stockManagedProducts } from "@/lib/stock";
 import { loginAction, logoutAction, restockAction } from "./actions";
 
@@ -34,7 +38,7 @@ export default async function AdminStockPage({
   searchParams: Promise<{ error?: string; done?: string }>;
 }) {
   const { error, done } = await searchParams;
-  const configured = isAdminConfigured();
+  const config = adminConfigState();
   const loggedIn = await isLoggedIn();
 
   return (
@@ -62,12 +66,20 @@ export default async function AdminStockPage({
         </p>
       ) : null}
 
-      {!configured ? (
+      {config !== "ok" ? (
         <div className="mt-8 border border-ink/12 bg-paper-warm px-5 py-6 text-[0.9rem] leading-[1.95] text-moss">
           <p>この画面はまだ使えません。</p>
-          <p className="mt-3">
-            合言葉（環境変数 ADMIN_PASSWORD）を設定すると開けるようになります。
-          </p>
+          {config === "missing" ? (
+            <p className="mt-3">
+              合言葉（環境変数 ADMIN_PASSWORD）がサーバーに届いていません。
+              設定したあと、もう一度デプロイが必要です。
+            </p>
+          ) : (
+            <p className="mt-3">
+              合言葉が短すぎます。
+              {PASSWORD_MIN_LENGTH}文字以上に変えて、もう一度デプロイしてください。
+            </p>
+          )}
         </div>
       ) : !loggedIn ? (
         <form action={loginAction} className="mt-8">
