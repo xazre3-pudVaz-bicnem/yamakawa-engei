@@ -178,13 +178,6 @@ export default async function ProductPage({
                     .join("／")}
                 </p>
               )}
-              {/* 限定数。事実としてご用意できる総数だけを書く。
-                  「残り〇点」とは書かない（売れた数を数えていないため） */}
-              {product.limitedStock !== null && (
-                <p className="mt-3 text-[0.85rem] leading-[1.9] text-lychee-deep">
-                  今季ご用意できるのは{product.limitedStock}点です。
-                </p>
-              )}
             </div>
 
             <div className="mt-7">

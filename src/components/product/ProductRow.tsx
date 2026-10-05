@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Photo from "@/components/ui/Photo";
 import StatusBadge from "@/components/ui/StatusBadge";
+import StockNote from "@/components/product/StockNote";
 import type { Product } from "@/data/products";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -77,9 +78,7 @@ export default function ProductRow({
               <dd>
                 {product.volume}
                 {product.countGuide ? `（${product.countGuide}）` : ""}
-                {product.limitedStock !== null
-                  ? `／${product.limitedStock}点限定`
-                  : ""}
+                <StockNote product={product} />
               </dd>
             </div>
           )}

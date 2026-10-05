@@ -111,14 +111,27 @@ export type Product = {
   /** 1回のご注文で選べる最大数量 */
   maxQuantity: number;
   /**
-   * 今季ご用意できる総数（限定販売の「残り〇個」ではない）。
+   * 残りの数をサイトで数える商品。数えないものは null。
    *
-   * 画面には「今季は〇個限定」とだけ出す。
-   * このサイトは売れた数を数えていないため、ここの数字は自動で減らない。
-   * 売り切れたら availability を "sold_out" に切り替えること。
-   * 限定でないものは null。
+   * 入れておくと、
+   *   ・補充してからいくつ売れたかを Stripe から数える（lib/stock.ts）
+   *   ・残りが足りないご注文は決済に進めない
+   *   ・残り0で自動的に売り切れ表示になる
+   *
+   * 数え方は「補充数 − 補充日時より後に売れた数」。
+   * カウンタを減らしていく方式ではないので、
+   * Stripeから同じ通知が2回届いても二重に減らない。
+   *
+   * ここに書くのは最初の1回分だけ。
+   * 農園が /admin/stock から補充すると、そちらが新しい記録になり、
+   * コードを書き換えなくても残りの数が戻る。
    */
-  limitedStock: number | null;
+  stock: {
+    /** ご用意する数 */
+    initial: number;
+    /** この日時より後の、お支払いが済んだご注文を数える（ISO8601） */
+    since: string;
+  } | null;
 
   /** 販売開始日（ISO文字列）。未定なら null */
   saleStart: string | null;
@@ -247,7 +260,7 @@ export const products: Product[] = [
     // "in_stock" | "preorder" | "sold_out" | "coming_soon" | "draft"
     availability: "sold_out",
     maxQuantity: 10,
-    limitedStock: null,
+    stock: null,
 
     saleStart: null, // [TODO] 今季の販売開始日
     saleEnd: null, // [TODO] 今季の販売終了日
@@ -357,7 +370,7 @@ export const products: Product[] = [
     // ★販売状況はここで切り替える★
     availability: "sold_out",
     maxQuantity: 10,
-    limitedStock: null,
+    stock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -455,7 +468,7 @@ export const products: Product[] = [
     // ★販売状況はここで切り替える★
     availability: "in_stock",
     maxQuantity: 6,
-    limitedStock: null,
+    stock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -555,7 +568,7 @@ export const products: Product[] = [
 
     availability: "draft",
     maxQuantity: 6,
-    limitedStock: null,
+    stock: null,
 
     saleStart: null,
     saleEnd: null,
@@ -654,7 +667,7 @@ export const products: Product[] = [
     // [確認済] 2026年9月23日 櫻井植物園さまとご契約。販売開始
     availability: "in_stock",
     maxQuantity: 6,
-    limitedStock: null,
+    stock: null,
 
     saleStart: null, // [TODO] 今季の販売開始日（10月のいつからか）
     saleEnd: null,
@@ -725,48 +738,59 @@ export const products: Product[] = [
 
   /* ──────────────────────────────────────────────
      ドラゴンフルーツ（山川園芸）
-     [確認済] 2026年10月2日 農園より
-       「1個 400g 600円です」
-       「1個が、400gに満たない場合は、1個分のパッケージに400g以上に
-         なるようにドラゴンフルーツを複数個入れる場合があります」
-       とりあえず5パックの限定販売
-     [TODO] 1個口（60サイズ）に何パックまで入るか
-       → 伺えるまで availability は "draft" のままにすること。
-         個口数を計算する根拠がないため、公開すると送料を誤る。
-         ライチの1個口上限（1,200g）は350g・500gのパックで伺った条件なので、
-         ドラゴンフルーツに当てはめてはいけない。
-     [TODO] 常温便かクール便か
-       （ハワイ大学の資料では6℃で低温障害。冷蔵でよいか確認が必要）
+     [確認済] 2026年10月3日 農園より（実際に箱詰めして確認いただいた）
+       「60サイズは2kgまでに合わせ、実際に確認したところ、写真の品は
+         350g以上400g未満なのですが、1箱に対し、3個までが適正のように
+         感じます」
+       「1個口に対して適正個数を3パッケージ、なおかつ、1パッケージ当たりの
+         g数を350gに変更致します」
+       「金額も1パッケージを600円から、550円に変更したいです」
+       → 1パッケージ350g以上・550円・1個口に3パッケージまで
+     [確認済] 2026年10月3日 配送はクール便
+       「現在、資材を用意することが、出来ないため、0〜10℃であるならば、
+         配送中に0℃を保つ、もしくは、0℃以下になる可能性が無い限り、
+         クール便輸送が無難、あるいは適正の範囲と思います」
+       （常温便にするには発泡スチロール箱と大きな保冷剤が必要で、
+         いまは資材を用意できないとのこと）
+     [確認済] 2026年10月3日 在庫の考え方
+       「現在の供給状況が、5個とは言わず、たくさん出来る予定なのですが、
+         注文が入ってから、2〜3営業日のうちに、出荷可能に出来る品が5個と
+         いう感じです」
+       → 限定5個ではなく「一度に出荷できるのが5点」。
+         売り切れたら農園が /admin/stock から補充する
   ────────────────────────────────────────────── */
   {
     id: "dragon-fruit-1",
-    slug: "dragon-fruit-400g",
-    name: "ドラゴンフルーツ 400g",
+    slug: "dragon-fruit-350g",
+    name: "ドラゴンフルーツ 350g",
     shortName: "ドラゴンフルーツ",
     category: "tropical-fruit",
 
-    price: 600, // [確認済] 1パック（400g以上）あたり
+    price: 550, // [確認済] 2026年10月3日 1パック（350g以上）あたり
     taxIncluded: true,
     priceNote: "表示価格は税込です。送料は別途かかります。",
 
-    volume: "1パック 400g以上", // [確認済]
+    volume: "1パック 350g以上", // [確認済] 2026年10月3日
     // 個数で数える商品（maxPerParcel）。重さでは数えない。
+    // ライチの1個口上限（1,200g）はライチのパックで伺った条件なので使わない。
     weightGrams: null,
-    maxPerParcel: null, // [TODO] 1個口に何パックまで入るか
-    // [確認済] 1個で400gに届かないときは複数個でお詰めする
-    countGuide: "1パックに1〜数個（400g以上になるようお詰めします）",
+    maxPerParcel: 3, // [確認済] 2026年10月3日 1個口に3パッケージまで
+    // [確認済] 1個で350gに届かないときは複数個でお詰めする
+    countGuide: "1パックに1〜数個（350g以上になるようお詰めします）",
 
     // ★販売状況はここで切り替える★
-    // [TODO] maxPerParcel を伺えるまで draft のままにすること
-    availability: "draft",
+    availability: "in_stock",
+    // 一度に出荷できるのが5点。残りの数は lib/stock.ts が Stripe から数える
     maxQuantity: 5,
-    limitedStock: 5, // [確認済] とりあえず5パックの限定販売
+    // [確認済] 2026年10月3日 一度に出荷できるのが5点
+    stock: { initial: 5, since: "2026-10-05T00:00:00+09:00" },
 
     saleStart: null, // [TODO] 今季の販売開始日
     saleEnd: null,
 
     shippingSchedule: "8月下旬から12月ごろまでのお届けです。", // [確認済] 2026年9月13日
-    shippingMethod: null, // [TODO] 常温便かクール便か
+    // [確認済] 2026年10月3日 クール便が適正とのご判断
+    shippingMethod: "ヤマト運輸のクール便（冷蔵）でお届けします。",
 
     origin: siteConfig.origin,
     producerNote: null,
@@ -779,11 +803,11 @@ export const products: Product[] = [
     packaging: null, // [TODO] 包装の形
     showVarieties: false,
 
-    lead: "サボテンの仲間に実る、あざやかな赤紫の果実。1パック400g以上でお届けします。",
+    lead: "サボテンの仲間に実る、あざやかな赤紫の果実。1パック350g以上でお届けします。",
 
     description: [
       "山川園芸のハウスで育てたドラゴンフルーツです。ピタヤとも呼ばれます。",
-      "1パック400g以上でお届けします。1個で400gに届かないときは、400g以上になるように複数個をお入れします。",
+      "1パック350g以上でお届けします。1個で350gに届かないときは、350g以上になるように複数個をお入れします。",
       "縦半分に切って、スプーンですくうだけで召し上がれます。果肉に散らばる小さな黒い種は、取り除かずにそのまま食べられます。",
     ],
 
@@ -841,6 +865,21 @@ export const visibleProducts = products.filter(
 /** slug から商品を引く */
 export function getProduct(slug: string): Product | undefined {
   return visibleProducts.find((product) => product.slug === slug);
+}
+
+/**
+ * 「〇点までなら1個口」と伺えている商品の一覧。
+ *
+ * 配送ページの説明は、ここから自動で作る。
+ * 商品を足したり上限を変えたりしたときに、説明文が古いまま残らないようにする。
+ */
+export function perParcelLimits(): Array<{ name: string; max: number }> {
+  return visibleProducts
+    .filter((product) => product.maxPerParcel !== null)
+    .map((product) => ({
+      name: product.shortName,
+      max: product.maxPerParcel as number,
+    }));
 }
 
 /** カテゴリー内の商品 */

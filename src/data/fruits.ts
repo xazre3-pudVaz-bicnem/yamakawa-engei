@@ -379,14 +379,12 @@ export const fruits: Fruit[] = [
     // [確認済] 2026年9月13日 農園からのメモ
     harvestSeason: "8月下旬から12月ごろまで",
     sales: {
-      // [確認済] 2026年10月2日 農園より 5パックの限定販売
-      // 実際にカートへ出るかどうかは products.ts の availability で決まる。
-      // draft のあいだは、この下の文章とご相談の導線が表示される。
+      // [確認済] 2026年10月3日 1パック350g以上・550円で販売開始
       status: "online",
-      packSize: "1パック 400g以上",
-      note: "1パック400g以上でお届けします。1個で400gに届かないときは、400g以上になるように複数個をお入れします。",
+      packSize: "1パック 350g以上",
+      note: "1パック350g以上でお届けします。1個で350gに届かないときは、350g以上になるように複数個をお入れします。",
     },
-    productSlug: "dragon-fruit-400g",
+    productSlug: "dragon-fruit-350g",
 
     related: [
       { href: "/lychee", label: "ライチ完全ガイドを読む" },

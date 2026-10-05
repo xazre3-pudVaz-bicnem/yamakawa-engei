@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "tsx scripts/check-shipping.ts",
+    "prebuild": "tsx scripts/check-shipping.ts && tsx scripts/check-stock.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -12,7 +12,8 @@
     "blog:generate": "tsx scripts/generate-daily-post.ts",
     "check:shipping": "tsx scripts/check-shipping.ts",
     "check:stripe": "tsx scripts/check-stripe.ts",
-    "check:mail": "tsx scripts/check-mail.ts"
+    "check:mail": "tsx scripts/check-mail.ts",
+    "check:stock": "tsx scripts/check-stock.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

@@ -191,25 +191,51 @@ export function encodeOrderItems(lines: ValidatedLine[]): string {
  * 読み取れない値が1つでもあれば null を返す（推測で補わない）。
  */
 export function decodeOrderItems(raw: string | undefined | null): ShippingLine[] | null {
-  if (typeof raw !== "string" || raw.trim() === "") return null;
+  const items = parseOrderItems(raw);
+  if (!items) return null;
 
   const lines: ShippingLine[] = [];
 
-  for (const part of raw.split(",")) {
-    const [slug, rawQuantity] = part.split(":");
-    const product = getProduct((slug ?? "").trim());
+  for (const item of items) {
+    const product = getProduct(item.slug);
     if (!product) return null;
-
-    const quantity = Number(rawQuantity);
-    if (!Number.isInteger(quantity) || quantity < 1) return null;
 
     lines.push({
       name: product.name,
-      quantity,
+      quantity: item.quantity,
       weightGrams: product.weightGrams,
       maxPerParcel: product.maxPerParcel,
     });
   }
 
   return lines.length > 0 ? lines : null;
+}
+
+/**
+ * encodeOrderItems で作った文字列を「slugと数量」に戻す。
+ *
+ * 商品データを引かずに slug のまま返すので、
+ * いまは取り扱っていない商品が入ったご注文も数えられる
+ * （在庫の集計では、過去のご注文も漏らさず数える必要がある）。
+ * 読み取れない値が1つでもあれば null を返す。
+ */
+export function parseOrderItems(
+  raw: string | undefined | null,
+): Array<{ slug: string; quantity: number }> | null {
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+
+  const items: Array<{ slug: string; quantity: number }> = [];
+
+  for (const part of raw.split(",")) {
+    const [rawSlug, rawQuantity] = part.split(":");
+    const slug = (rawSlug ?? "").trim();
+    if (!slug) return null;
+
+    const quantity = Number(rawQuantity);
+    if (!Number.isInteger(quantity) || quantity < 1) return null;
+
+    items.push({ slug, quantity });
+  }
+
+  return items.length > 0 ? items : null;
 }

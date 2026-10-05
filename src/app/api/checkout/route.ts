@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe, logStripeError } from "@/lib/stripe";
 import { encodeOrderItems, toShippingLines, validateOrder } from "@/lib/order";
+import { checkStock } from "@/lib/stock";
 import { canCheckout, planParcels, shippingBlockReason } from "@/data/shipping";
 import { absoluteUrl, siteConfig } from "@/data/siteConfig";
 
@@ -98,7 +99,21 @@ export async function POST(request: Request) {
     );
   }
 
-  /* ---- 4. Stripeに渡す明細を組み立てる ---- */
+  /* ---- 4. 残りの数が足りているか ---- */
+  // 数が分からないときも通さない（lib/stock.ts）。
+  // お届けできないご注文を受けてしまわないため。
+  const stock = await checkStock(
+    validated.lines.map((line) => ({
+      slug: line.product.slug,
+      name: line.product.name,
+      quantity: line.quantity,
+    })),
+  );
+  if (!stock.ok) {
+    return NextResponse.json({ message: stock.message }, { status: stock.status });
+  }
+
+  /* ---- 5. Stripeに渡す明細を組み立てる ---- */
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
     validated.lines.map((line) => ({
       quantity: line.quantity,
@@ -121,7 +136,7 @@ export async function POST(request: Request) {
     0,
   );
 
-  /* ---- 5. 個口数をサーバー側で計算しておく ---- */
+  /* ---- 6. 個口数をサーバー側で計算しておく ---- */
   // 個口数は商品の重量だけで決まり、お届け先には左右されない。
   // ここで一度計算しておき、金額の計算は住所が入ったあとに行う。
   const plan = planParcels(toShippingLines(validated.lines));
@@ -129,7 +144,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: plan.reason }, { status: 409 });
   }
 
-  /* ---- 6. Checkout Session を作成 ---- */
+  /* ---- 7. Checkout Session を作成 ---- */
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

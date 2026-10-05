@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { perParcelLimits } from "@/data/products";
 import PageHero from "@/components/ui/PageHero";
 import Reveal from "@/components/ui/Reveal";
 import { checkoutConfig, UNCONFIRMED_NOTE } from "@/data/siteConfig";
@@ -172,7 +173,9 @@ export default function ShippingPage() {
               運賃が改定された場合は、こちらの表も更新します。
             </p>
 
-            {/* 個口数の考え方を具体例で示す。PACKING_EXAMPLES が唯一の出どころ */}
+            {/* 個口数の考え方を具体例で示す。
+                ライチは PACKING_EXAMPLES、ほかの果物は商品データが出どころ。
+                どちらも手で書き足さないこと */}
             <div className="mt-8 border border-ink/12 bg-paper-warm px-6 py-6">
               <p className="font-mincho text-[1rem] text-forest">
                 何個口になるか
@@ -190,6 +193,20 @@ export default function ShippingPage() {
                   </div>
                 ))}
               </dl>
+              {perParcelLimits().length > 0 ? (
+                <dl className="mt-5 divide-y divide-ink/10 border-t border-ink/10 pt-1 text-[0.88rem]">
+                  {perParcelLimits().map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-baseline justify-between gap-4 py-2.5"
+                    >
+                      <dt className="text-ink/80">{item.name} × {item.max}点まで</dt>
+                      <dd className="tnum shrink-0 text-forest">1個口</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+
               <p className="mt-4 text-[0.83rem] leading-[1.9] text-moss">
                 商品点数ではなく個口数の分だけ送料がかかります。
                 たとえば関東へ2個口でお送りする場合の送料は、
