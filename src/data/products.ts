@@ -800,7 +800,9 @@ export const products: Product[] = [
     storage:
       "10℃前後で保存し、冷やしすぎないようにしてください。追熟しないため、届いたらお早めにお召し上がりください。",
 
-    packaging: null, // [TODO] 包装の形
+    // [確認済] 2026年10月3日にいただいた写真の状態
+    packaging:
+      "1パックずつ発泡ネットと袋に入れ、箱に詰めてお届けします。",
     showVarieties: false,
 
     lead: "サボテンの仲間に実る、あざやかな赤紫の果実。1パック350g以上でお届けします。",
@@ -843,6 +845,17 @@ export const products: Product[] = [
         src: "/images/fruits/dragon-fruit/cut-on-plate.jpg",
         alt: "皿に盛ったドラゴンフルーツ",
         slot: "fruits/dragon-fruit/cut-on-plate.jpg",
+      },
+      // [確認済] 2026年10月3日 農園より。実際にお届けする状態
+      {
+        src: "/images/products/dragon-fruit/packed.jpg",
+        alt: "発泡ネットと袋に入れたドラゴンフルーツ",
+        slot: "products/dragon-fruit/packed.jpg",
+      },
+      {
+        src: "/images/products/dragon-fruit/in-box.jpg",
+        alt: "箱に詰めたドラゴンフルーツ",
+        slot: "products/dragon-fruit/in-box.jpg",
       },
     ],
 
