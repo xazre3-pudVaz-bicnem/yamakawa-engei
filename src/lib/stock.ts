@@ -64,6 +64,8 @@ export type StockState = {
   since: Date;
   /** 補充の記録が Stripe 側にあるか（false なら products.ts の初期値） */
   fromLedger: boolean;
+  /** 農園が書いた「次のご用意の目安」。書かれていなければ null */
+  note: string | null;
 };
 
 /* ================================================================
@@ -83,6 +85,24 @@ export function atKey(slug: string): string {
   return `${slug}__at`;
 }
 
+export function noteKey(slug: string): string {
+  return `${slug}__note`;
+}
+
+/** 次のご用意の目安に入れられる長さ */
+export const NOTE_MAX_LENGTH = 100;
+
+/**
+ * 農園が書いた「次のご用意の目安」を、画面に出せる形に整える。
+ * 長すぎるもの・改行は切り落とす。空なら null。
+ */
+export function cleanNote(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const text = input.replace(/\s+/g, " ").trim();
+  if (text === "") return null;
+  return text.slice(0, NOTE_MAX_LENGTH);
+}
+
 /**
  * metadata のキーが Stripe の制限に収まるか。
  * 収まらない slug の商品は在庫を数えられないので、テストで落とす。
@@ -90,7 +110,8 @@ export function atKey(slug: string): string {
 export function isSlugStorable(slug: string): boolean {
   return (
     amountKey(slug).length <= METADATA_KEY_LIMIT &&
-    atKey(slug).length <= METADATA_KEY_LIMIT
+    atKey(slug).length <= METADATA_KEY_LIMIT &&
+    noteKey(slug).length <= METADATA_KEY_LIMIT
   );
 }
 
@@ -98,7 +119,12 @@ export function isSlugStorable(slug: string): boolean {
    補充の記録
 ================================================================ */
 
-export type Restock = { amount: number; at: Date; fromLedger: boolean };
+export type Restock = {
+  amount: number;
+  at: Date;
+  fromLedger: boolean;
+  note: string | null;
+};
 
 let ledgerCache: { at: number; metadata: Stripe.Metadata } | null = null;
 
@@ -145,6 +171,7 @@ export function resolveRestock(
     amount: product.stock.initial,
     at: new Date(product.stock.since),
     fromLedger: false,
+    note: null,
   };
 
   const rawAmount = ledger[amountKey(product.slug)];
@@ -161,7 +188,7 @@ export function resolveRestock(
 
   // 新しいほうの記録を使う
   return at.getTime() >= initial.at.getTime()
-    ? { amount, at, fromLedger: true }
+    ? { amount, at, fromLedger: true, note: cleanNote(ledger[noteKey(product.slug)]) }
     : initial;
 }
 
@@ -286,6 +313,7 @@ export async function getStock(slug: string): Promise<StockState | null> {
       remaining: Math.max(0, restock.amount - sold),
       since: restock.at,
       fromLedger: restock.fromLedger,
+      note: restock.note,
     };
   } catch (error) {
     logStripeError("stock", error);
@@ -358,6 +386,7 @@ export async function checkStock(
 export async function restock(
   slug: string,
   amount: number,
+  note?: unknown,
 ): Promise<{ ok: true; state: StockState } | { ok: false; message: string }> {
   const product = products.find((item) => item.slug === slug);
   if (!product || !product.stock) {
@@ -375,6 +404,8 @@ export async function restock(
   const metadata = {
     [amountKey(product.slug)]: String(amount),
     [atKey(product.slug)]: new Date().toISOString(),
+    // 空にしたいときは metadata から消す（Stripeは空文字で削除になる）
+    [noteKey(product.slug)]: cleanNote(note) ?? "",
   };
 
   try {

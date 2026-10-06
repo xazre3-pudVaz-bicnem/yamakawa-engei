@@ -4,6 +4,7 @@ import {
   isLoggedIn,
   PASSWORD_MIN_LENGTH,
 } from "@/lib/admin-auth";
+import { NOTE_MAX_LENGTH } from "@/lib/stock";
 import { getAllStock, stockManagedProducts } from "@/lib/stock";
 import { loginAction, logoutAction, restockAction } from "./actions";
 
@@ -155,6 +156,12 @@ async function StockPanel() {
                     <dt className="w-24 shrink-0">数え始めた日時</dt>
                     <dd>{formatDate(state.since)}</dd>
                   </div>
+                  {state.note ? (
+                    <div className="flex gap-3">
+                      <dt className="w-24 shrink-0">お客様への一言</dt>
+                      <dd>{state.note}</dd>
+                    </div>
+                  ) : null}
                 </dl>
               </>
             ) : (
@@ -186,22 +193,43 @@ async function StockPanel() {
                 required
                 className="mt-3 w-full border border-ink/20 bg-white px-4 py-4 text-[1.2rem] text-ink focus:border-forest focus:outline-none"
               />
+
+              <label
+                htmlFor={`note-${product.slug}`}
+                className="mt-7 block text-[0.9rem] leading-[1.9] text-forest"
+              >
+                次のご用意の目安（空のままで構いません）
+                <span className="mt-1 block text-[0.82rem] text-moss">
+                  売り切れのあいだ、商品ページにそのまま表示します。
+                  日付を約束しない書き方にしてください。
+                </span>
+              </label>
+              <input
+                id={`note-${product.slug}`}
+                name="note"
+                type="text"
+                maxLength={NOTE_MAX_LENGTH}
+                defaultValue={state?.note ?? ""}
+                placeholder="次のご用意は2週間ほど先の見込みです。"
+                className="mt-3 w-full border border-ink/20 bg-white px-4 py-4 text-[1rem] text-ink focus:border-forest focus:outline-none"
+              />
+
               <button
                 type="submit"
-                className="mt-4 w-full border border-forest bg-forest px-8 py-4 text-[0.95rem] tracking-[0.08em] text-cream transition-colors duration-300 hover:bg-forest-deep"
+                name="intent"
+                value="set"
+                className="mt-5 w-full border border-forest bg-forest px-8 py-4 text-[0.95rem] tracking-[0.08em] text-cream transition-colors duration-300 hover:bg-forest-deep"
               >
                 この数にする
               </button>
-            </form>
 
-            <form action={restockAction} className="mt-3">
-              <input type="hidden" name="slug" value={product.slug} />
-              <input type="hidden" name="amount" value="0" />
               <button
                 type="submit"
-                className="w-full border border-ink/25 px-8 py-3.5 text-[0.9rem] text-moss transition-colors duration-300 hover:border-ink/50 hover:text-ink"
+                name="intent"
+                value="soldout"
+                className="mt-3 w-full border border-ink/25 px-8 py-3.5 text-[0.9rem] text-moss transition-colors duration-300 hover:border-ink/50 hover:text-ink"
               >
-                売り切れにする
+                売り切れにする（上の数は使いません）
               </button>
             </form>
           </section>

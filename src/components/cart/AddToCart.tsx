@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "./CartProvider";
-import { useStock } from "./useStock";
+import { hasStock, useStock } from "./useStock";
 import QuantityStepper from "./QuantityStepper";
 import { availabilityLabel, isBuyable, type Product } from "@/data/products";
 import { siteConfig } from "@/data/siteConfig";
@@ -99,12 +99,18 @@ export default function AddToCart({ product }: { product: Product }) {
       );
     }
 
-    if (stock <= 0) {
+    if (stock.remaining <= 0) {
       return (
         <div className="border border-ink/12 bg-paper-warm px-6 py-6">
           <p className="font-mincho text-[1.05rem] text-forest">
             ただいま売り切れです
           </p>
+          {/* 農園が「次のご用意の目安」を書いていれば、それを先に出す */}
+          {stock.note ? (
+            <p className="mt-3 text-[0.88rem] leading-[1.95] text-forest">
+              {stock.note}
+            </p>
+          ) : null}
           <p className="mt-3 text-[0.88rem] leading-[1.95] text-moss">
             {product.shortName}
             は、収穫と出荷の準備ができしだい、またご用意します。
@@ -132,16 +138,15 @@ export default function AddToCart({ product }: { product: Product }) {
   }
 
   // 数量の上限。残りの数を数えている商品は、残りを超えて選べない
-  const limit =
-    typeof stock === "number"
-      ? Math.max(1, Math.min(product.maxQuantity, stock))
-      : product.maxQuantity;
+  const limit = hasStock(stock)
+    ? Math.max(1, Math.min(product.maxQuantity, stock.remaining))
+    : product.maxQuantity;
 
   return (
     <div>
-      {typeof stock === "number" ? (
+      {hasStock(stock) ? (
         <p className="mb-4 text-[0.88rem] leading-[1.9] text-forest">
-          ただいまご用意できるのは{stock}点です。
+          ただいまご用意できるのは{stock.remaining}点です。
         </p>
       ) : null}
 

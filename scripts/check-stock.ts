@@ -16,7 +16,10 @@ import {
   addSessionsToCounts,
   amountKey,
   atKey,
+  cleanNote,
   isSlugStorable,
+  NOTE_MAX_LENGTH,
+  noteKey,
   resolveRestock,
   stockManagedProducts,
 } from "../src/lib/stock";
@@ -133,12 +136,13 @@ console.log("● どの補充の記録を使うか");
     amount: 5,
     at: new Date("2026-10-01T00:00:00+09:00"),
     fromLedger: false,
+    note: null,
   });
 
   check(
     "あとから補充した記録があれば、そちらを使う",
     resolveRestock(product, { [amount]: "8", [at]: newer }),
-    { amount: 8, at: new Date(newer), fromLedger: true },
+    { amount: 8, at: new Date(newer), fromLedger: true, note: null },
   );
 
   // 初期値を書き換えたときに、古い補充の記録に引きずられないこと
@@ -149,6 +153,7 @@ console.log("● どの補充の記録を使うか");
       amount: 5,
       at: new Date("2026-10-01T00:00:00+09:00"),
       fromLedger: false,
+      note: null,
     },
   );
 
@@ -156,7 +161,7 @@ console.log("● どの補充の記録を使うか");
   check(
     "0点にした記録もそのまま使う",
     resolveRestock(product, { [amount]: "0", [at]: newer }),
-    { amount: 0, at: new Date(newer), fromLedger: true },
+    { amount: 0, at: new Date(newer), fromLedger: true, note: null },
   );
 
   check(
@@ -179,7 +184,44 @@ console.log("● どの補充の記録を使うか");
     resolveRestock(product, { [amount]: "-3", [at]: newer })!.amount,
     5,
   );
+
+  // 売り切れのあいだ、商品ページに出る文章
+  const note = noteKey("test-item");
+  check(
+    "次のご用意の目安を読む",
+    resolveRestock(product, {
+      [amount]: "0",
+      [at]: newer,
+      [note]: "次のご用意は2週間ほど先の見込みです。",
+    })!.note,
+    "次のご用意は2週間ほど先の見込みです。",
+  );
+  check(
+    "初期値に戻ったときは目安を出さない",
+    resolveRestock(product, {
+      [amount]: "8",
+      [at]: older,
+      [note]: "古いお知らせ",
+    })!.note,
+    null,
+  );
 }
+
+console.log("");
+console.log("● お客様に出す一言の整え方");
+
+check("前後の空白を落とす", cleanNote("  2週間ほど先の見込みです。  "), "2週間ほど先の見込みです。");
+check("改行は1つの空白にする", cleanNote("2週間ほど\n先の見込み"), "2週間ほど 先の見込み");
+// 正規表現の書き損じで、普通の文字が消えてしまっていたことがある
+check("英字を消さない", cleanNote("SサイズとMサイズがあります"), "SサイズとMサイズがあります");
+check("空は出さない", cleanNote("   "), null);
+check("未入力は出さない", cleanNote(undefined), null);
+check("文字列でないものは出さない", cleanNote(123), null);
+check(
+  `${NOTE_MAX_LENGTH}文字を超えたら切る`,
+  cleanNote("あ".repeat(NOTE_MAX_LENGTH + 20))?.length,
+  NOTE_MAX_LENGTH,
+);
 
 console.log("");
 console.log("● 売れた数の数え方");

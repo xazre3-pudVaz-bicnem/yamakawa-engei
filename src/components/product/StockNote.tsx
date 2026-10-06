@@ -1,6 +1,6 @@
 "use client";
 
-import { useStock } from "@/components/cart/useStock";
+import { hasStock, useStock } from "@/components/cart/useStock";
 import type { Product } from "@/data/products";
 
 /**
@@ -16,11 +16,11 @@ export default function StockNote({ product }: { product: Product }) {
   const counted = product.stock !== null;
   const stock = useStock(product.slug, counted);
 
-  if (!counted || typeof stock !== "number") return null;
+  if (!counted || !hasStock(stock)) return null;
 
   return (
     <span className="text-forest">
-      ／{stock > 0 ? `ただいま${stock}点` : "ただいま売り切れ"}
+      ／{stock.remaining > 0 ? `ただいま${stock.remaining}点` : "ただいま売り切れ"}
     </span>
   );
 }

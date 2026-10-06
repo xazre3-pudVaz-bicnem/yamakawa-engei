@@ -47,16 +47,24 @@ export async function restockAction(formData: FormData): Promise<void> {
   }
 
   const slug = String(formData.get("slug") ?? "");
-  const amount = Number(formData.get("amount"));
+  const note = formData.get("note");
 
-  const result = await restock(slug, amount);
+  // 「売り切れにする」のボタンは、入れた数にかかわらず0にする
+  const amount =
+    String(formData.get("intent") ?? "") === "soldout"
+      ? 0
+      : Number(formData.get("amount"));
+
+  const result = await restock(slug, amount, note);
 
   if (!result.ok) {
     redirect(`/admin/stock?error=${encodeURIComponent(result.message)}`);
   }
 
   revalidatePath("/admin/stock");
-  redirect(
-    `/admin/stock?done=${encodeURIComponent(`${result.state.remaining}点にしました。`)}`,
-  );
+  const done = result.state.note
+    ? `${result.state.remaining}点にしました。お客様には「${result.state.note}」と表示します。`
+    : `${result.state.remaining}点にしました。`;
+
+  redirect(`/admin/stock?done=${encodeURIComponent(done)}`);
 }

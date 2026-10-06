@@ -9,24 +9,27 @@ import { useEffect, useState } from "react";
  *
  * "loading" … 確認中
  * "unknown" … 確認できなかった（売り切れと同じ扱いにする）
- * 数値      … 残りの数
+ * それ以外  … 残りの数と、農園が書いた次のご用意の目安
  *
  * 読めなかったときに「たくさんある」とみなさないこと。
  * お届けできないご注文を受けてしまう。
  */
-export type StockView = "loading" | "unknown" | number;
+export type StockInfo = { remaining: number; note: string | null };
+export type StockView = "loading" | "unknown" | StockInfo;
+
+type StockBody = Record<string, StockInfo | null>;
 
 /** 同じ数を何度も取りに行かないよう、タブの中で持っておく */
-let cache: { at: number; body: Record<string, number | null> } | null = null;
+let cache: { at: number; body: StockBody } | null = null;
 const CACHE_TTL_MS = 10_000;
 
-async function fetchStock(): Promise<Record<string, number | null>> {
+async function fetchStock(): Promise<StockBody> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.body;
 
   const response = await fetch("/api/stock", { cache: "no-store" });
   if (!response.ok) throw new Error(String(response.status));
 
-  const body = (await response.json()) as Record<string, number | null>;
+  const body = (await response.json()) as StockBody;
   cache = { at: Date.now(), body };
   return body;
 }
@@ -42,7 +45,9 @@ export function useStock(slug: string, enabled: boolean): StockView {
       .then((body) => {
         if (!alive) return;
         const value = body[slug];
-        setView(typeof value === "number" ? value : "unknown");
+        setView(
+          value && typeof value.remaining === "number" ? value : "unknown",
+        );
       })
       .catch(() => {
         if (alive) setView("unknown");
@@ -54,6 +59,11 @@ export function useStock(slug: string, enabled: boolean): StockView {
   }, [slug, enabled]);
 
   return view;
+}
+
+/** 残りの数が読めているか */
+export function hasStock(view: StockView): view is StockInfo {
+  return view !== "loading" && view !== "unknown";
 }
 
 /** 補充したあとなどに、持っている数を捨てる */
