@@ -22,6 +22,7 @@ import {
   getFruit,
   getFruitProduct,
 } from "@/data/fruits";
+import { getProduct } from "@/data/products";
 import { siteConfig } from "@/data/siteConfig";
 import { faqJsonLd } from "@/lib/jsonld";
 import { buildMetadata } from "@/lib/metadata";
@@ -84,6 +85,13 @@ export default async function FruitPage({
 
   const path = fruitPath(fruit.slug);
   const product = getFruitProduct(fruit);
+
+  // 今季の販売が終わった果物。ご相談の案内ではなく、終了したことをお伝えする
+  const finished = fruit.productSlug
+    ? (getProduct(fruit.productSlug)?.availability === "sold_out"
+      ? getProduct(fruit.productSlug)
+      : null)
+    : null;
   const faqs = fruitFaqs(fruit);
   const others = fruits.filter((item) => item.slug !== fruit.slug);
 
@@ -458,14 +466,23 @@ export default async function FruitPage({
                 {fruit.name}のお取り扱いについて
               </h2>
               <div className="mx-auto mt-6 max-w-xl space-y-3 text-[0.92rem] leading-[2.05] text-paper/80">
-                {fruit.sales.note ? <p>{fruit.sales.note}</p> : null}
-                <p>
-                  {fruit.sales.packSize
-                    ? `${fruit.sales.packSize}でのご用意になります。`
-                    : ""}
-                  収穫の状況によってご用意できる数が変わります。
-                  お電話またはお問い合わせよりご相談ください。
-                </p>
+                {finished ? (
+                  <p>
+                    {finished.soldOutNote ??
+                      `今季の${fruit.name}は終了しました。`}
+                  </p>
+                ) : (
+                  <>
+                    {fruit.sales.note ? <p>{fruit.sales.note}</p> : null}
+                    <p>
+                      {fruit.sales.packSize
+                        ? `${fruit.sales.packSize}でのご用意になります。`
+                        : ""}
+                      収穫の状況によってご用意できる数が変わります。
+                      お電話またはお問い合わせよりご相談ください。
+                    </p>
+                  </>
+                )}
                 {fruit.harvestSeason ? (
                   <p className="text-paper/70">
                     {fruit.name}の収穫は{fruit.harvestSeason}です。

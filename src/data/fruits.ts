@@ -911,6 +911,17 @@ export function fruitAvailabilityFaq(fruit: Fruit): {
   // 「販売していません」ではなく、ご相談を承る案内にする。
   // ページ本文の分岐（app/fruits/[slug]/page.tsx）と同じ条件にそろえること。
   if (fruit.sales.status !== "none") {
+    // 今季の販売が終わっている果物は、ご相談ではなく終了したことをお伝えする
+    const listed = fruit.productSlug ? getProduct(fruit.productSlug) : undefined;
+    if (listed && listed.availability === "sold_out") {
+      return {
+        question: `山川園芸の${fruit.name}は買えますか？`,
+        answer:
+          listed.soldOutNote ??
+          `今季の${fruit.name}は終了しました。次のご用意は公式Instagramと本サイトのお知らせでご案内します。`,
+      };
+    }
+
     const pack = fruit.sales.packSize
       ? `${fruit.sales.packSize}でのご用意になります。`
       : "";

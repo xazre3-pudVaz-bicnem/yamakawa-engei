@@ -38,9 +38,11 @@ export default function AddToCart({ product }: { product: Product }) {
               ? "価格を準備しています"
               : "ただいま販売準備中です"}
         </p>
+        {/* 次の収穫の時期は果物ごとに違うので、文言は商品データから出す */}
         <p className="mt-3 text-[0.88rem] leading-[1.95] text-moss">
           {product.availability === "sold_out"
-            ? "たくさんのご注文をありがとうございました。次の収穫は来年の初夏です。"
+            ? (product.soldOutNote ??
+              "たくさんのご注文をありがとうございました。次のご用意は公式Instagramと本サイトのお知らせでご案内します。")
             : "販売の開始は、公式Instagramと本サイトのお知らせでご案内します。"}
         </p>
         <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[0.85rem]">

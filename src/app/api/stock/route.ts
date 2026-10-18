@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getProduct, isBuyable } from "@/data/products";
 import { getAllStock } from "@/lib/stock";
 
 /**
@@ -25,6 +26,11 @@ export async function GET() {
 
   const body: Record<string, StockBody> = {};
   for (const [slug, state] of all) {
+    // 売り切れ・販売終了にした商品の数は出さない。
+    // 一覧に「ただいま5点」と残ってしまうため
+    const product = getProduct(slug);
+    if (!product || !isBuyable(product)) continue;
+
     body[slug] = state ? { remaining: state.remaining, note: state.note } : null;
   }
 

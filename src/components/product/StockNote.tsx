@@ -1,7 +1,7 @@
 "use client";
 
 import { hasStock, useStock } from "@/components/cart/useStock";
-import type { Product } from "@/data/products";
+import { isBuyable, type Product } from "@/data/products";
 
 /**
  * 一覧に出す「ただいま○点」の一行
@@ -13,7 +13,8 @@ import type { Product } from "@/data/products";
  * 「残り○点」とは書かない。急かすための表示にしないこと。
  */
 export default function StockNote({ product }: { product: Product }) {
-  const counted = product.stock !== null;
+  // 売り切れ・販売終了の表示は StatusBadge の役目。ここでは数を出さない
+  const counted = product.stock !== null && isBuyable(product);
   const stock = useStock(product.slug, counted);
 
   if (!counted || !hasStock(stock)) return null;

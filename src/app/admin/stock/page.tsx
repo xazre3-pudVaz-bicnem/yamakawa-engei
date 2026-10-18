@@ -4,6 +4,7 @@ import {
   isLoggedIn,
   PASSWORD_MIN_LENGTH,
 } from "@/lib/admin-auth";
+import { isBuyable } from "@/data/products";
 import { NOTE_MAX_LENGTH } from "@/lib/stock";
 import { getAllStock, stockManagedProducts } from "@/lib/stock";
 import { loginAction, logoutAction, restockAction } from "./actions";
@@ -137,6 +138,15 @@ async function StockPanel() {
             <h2 className="font-mincho text-[1.15rem] text-forest">
               {product.name}
             </h2>
+
+            {/* 販売そのものを止めている商品。数を入れても売り場には出ない */}
+            {!isBuyable(product) ? (
+              <p className="mt-3 border border-ink/12 bg-paper-warm px-4 py-3 text-[0.85rem] leading-[1.9] text-moss">
+                この商品はいま販売していません。商品ページは売り切れの表示になっています。
+                ここで数を入れても、販売は再開しません。
+                再開するときはご連絡ください。
+              </p>
+            ) : null}
 
             {state ? (
               <>

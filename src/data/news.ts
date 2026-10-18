@@ -30,8 +30,8 @@ export const newsCategoryLabel: Record<NewsCategory, string> = {
 };
 
 /**
- * [TODO] 現在、公開できる確定情報がないため空にしている。
- * 実際のお知らせが決まったら、下記の形式で追加すること。
+ * 確認できたことだけを書く。推測で先の予定を書かないこと。
+ * 形式:
  *
  * {
  *   id: "2026-lychee-start",
@@ -42,7 +42,24 @@ export const newsCategoryLabel: Record<NewsCategory, string> = {
  *   link: { href: "/shop", label: "オンラインショップ" },
  * },
  */
-export const news: NewsItem[] = [];
+export const news: NewsItem[] = [
+  // [確認済] 2026年10月17日 農園より
+  //   「櫻井植物園さまより、りゅうがんが売り切れた旨をご連絡致しました」
+  //   「今年はドラゴンフルーツは終了いたします」
+  //   「現在扱えるのはスターフルーツのみです」
+  {
+    id: "2026-ryugan-dragonfruit-end",
+    date: "2026-10-17",
+    category: "sale",
+    title: "龍眼とドラゴンフルーツの今季の販売を終了しました",
+    body: [
+      "龍眼は売り切れとなりました。たくさんのご注文をありがとうございました。",
+      "ドラゴンフルーツも、今年の分は終了いたします。次のご用意は来季になります。",
+      "ただいまお届けできるのはスターフルーツです。",
+    ],
+    link: { href: "/shop", label: "オンラインショップ" },
+  },
+];
 
 /** 新しい順に並べたお知らせ */
 export const sortedNews = [...news].sort((a, b) => b.date.localeCompare(a.date));

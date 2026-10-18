@@ -108,6 +108,13 @@ export type Product = {
   countGuide: string | null;
 
   availability: ProductAvailability;
+  /**
+   * 売り切れのときに商品ページへ出す一文。
+   *
+   * 果物ごとに次の収穫の時期が違うので、共通の文言にしない。
+   * 未設定（null）なら、当たり障りのない案内だけを出す。
+   */
+  soldOutNote: string | null;
   /** 1回のご注文で選べる最大数量 */
   maxQuantity: number;
   /**
@@ -259,6 +266,8 @@ export const products: Product[] = [
     // ★販売状況はここで切り替える★
     // "in_stock" | "preorder" | "sold_out" | "coming_soon" | "draft"
     availability: "sold_out",
+    soldOutNote:
+      "たくさんのご注文をありがとうございました。次の収穫は来年の初夏です。",
     maxQuantity: 10,
     stock: null,
 
@@ -369,6 +378,7 @@ export const products: Product[] = [
 
     // ★販売状況はここで切り替える★
     availability: "sold_out",
+    soldOutNote: null,
     maxQuantity: 10,
     stock: null,
 
@@ -466,7 +476,11 @@ export const products: Product[] = [
     countGuide: null, // [TODO] 1パックの粒数の目安
 
     // ★販売状況はここで切り替える★
-    availability: "in_stock",
+    // [確認済] 2026年10月17日 農園より
+    //   「先日、櫻井植物園さまより、りゅうがんが売り切れた旨をご連絡致しました」
+    availability: "sold_out",
+    soldOutNote:
+      "たくさんのご注文をありがとうございました。今季の龍眼は終了しました。次のご用意は来季（9月ごろ）になります。",
     maxQuantity: 6,
     stock: null,
 
@@ -567,6 +581,7 @@ export const products: Product[] = [
     countGuide: null,
 
     availability: "draft",
+    soldOutNote: null,
     maxQuantity: 6,
     stock: null,
 
@@ -666,6 +681,7 @@ export const products: Product[] = [
 
     // [確認済] 2026年9月23日 櫻井植物園さまとご契約。販売開始
     availability: "in_stock",
+    soldOutNote: null,
     maxQuantity: 6,
     stock: null,
 
@@ -779,7 +795,13 @@ export const products: Product[] = [
     countGuide: "1パックに1〜数個（350g以上になるようお詰めします）",
 
     // ★販売状況はここで切り替える★
-    availability: "in_stock",
+    // [確認済] 2026年10月17日 農園より
+    //   「ドラゴンフルーツについても、現在は売り切れ表示でお願い致します」
+    //   「今年はドラゴンフルーツは終了いたします」
+    // 来季また販売するときに in_stock へ戻し、stock.since を新しい日付にすること
+    availability: "sold_out",
+    soldOutNote:
+      "たくさんのご注文をありがとうございました。今年のドラゴンフルーツは終了しました。次のご用意は来季になります。",
     // 一度に出荷できるのが5点。残りの数は lib/stock.ts が Stripe から数える
     maxQuantity: 5,
     // [確認済] 2026年10月3日 一度に出荷できるのが5点
